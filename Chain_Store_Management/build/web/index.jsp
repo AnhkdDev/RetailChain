@@ -243,7 +243,7 @@
                                         <!--                                    hihihihi-->
                                         <ul class="pcoded-submenu">
                                             <li><a href="<%= request.getContextPath() %>/Purchase"  >View Purchases</a></li>
-                                            <li><a href="create-purchase.jsp">Create Purchase</a></li>
+                                            <li><a href="<%= request.getContextPath() %>/Purchase?action=create">Create Purchase</a></li>
                                         </ul>
                                     </li>
                                     <li class="pcoded-hasmenu">
