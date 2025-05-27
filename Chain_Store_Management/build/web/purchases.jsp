@@ -127,7 +127,7 @@
                             <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="" required="">
+                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
                                         <span class="form-bar"></span>
                                         <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
                                     </div>
@@ -268,6 +268,7 @@
                                                         <div class="card-block">
                                                             <c:if test="${not empty successMessage}">
                                                                 <div class="alert alert-success">${successMessage}</div>
+                                                                <c:remove var="successMessage" scope="session"/>
                                                             </c:if>
                                                             <c:if test="${not empty errorMessage}">
                                                                 <div class="alert alert-danger">${errorMessage}</div>
@@ -283,14 +284,19 @@
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <div class="form-group">
-                                                                            <label for="startDate">Start Date</label>
-                                                                            <input type="datetime-local" class="form-control" id="startDate" name="startDate" value="${startDate}">
+                                                                            <label for="warehouseName">Warehouse</label>
+                                                                            <select class="form-control" id="warehouseName" name="warehouseName">
+                                                                                <option value="">All Warehouses</option>
+                                                                                <c:forEach var="warehouse" items="${warehouses}">
+                                                                                    <option value="${warehouse.warehouseName}" <c:if test="${warehouseName == warehouse.warehouseName}">selected</c:if>>${warehouse.warehouseName}</option>
+                                                                                </c:forEach>
+                                                                            </select>
                                                                         </div>
                                                                     </div>
                                                                     <div class="col-md-3">
                                                                         <div class="form-group">
-                                                                            <label for="endDate">End Date</label>
-                                                                            <input type="datetime-local" class="form-control" id="endDate" name="endDate" value="${endDate}">
+                                                                            <label for="purchaseID">Purchase ID</label>
+                                                                            <input type="number" class="form-control" id="purchaseID" name="purchaseID" value="${purchaseID}" placeholder="Enter Purchase ID">
                                                                         </div>
                                                                     </div>
                                                                     <div class="col-md-3">
@@ -345,10 +351,6 @@
                                                                                             <a href="<%= request.getContextPath() %>/Purchase?action=viewDetails&purchaseID=${s.purchaseID}" class="btn btn-sm btn-info">
                                                                                                 <i class="fa fa-eye"></i> View Details
                                                                                             </a>
-                                                                                            <!-- Bỏ comment nếu muốn dùng Edit -->
-                                                                                            <!-- <a href="<%= request.getContextPath() %>/Purchase?action=edit&purchaseID=${s.purchaseID}" class="btn btn-sm btn-warning">
-                                                                                                <i class="fa fa-edit"></i> Edit
-                                                                                            </a> -->
                                                                                             <a href="<%= request.getContextPath() %>/Purchase?action=delete&purchaseID=${s.purchaseID}" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this purchase?')">
                                                                                                 <i class="fa fa-trash"></i> Delete
                                                                                             </a>
@@ -365,15 +367,15 @@
                                                                 <nav aria-label="Page navigation">
                                                                     <ul class="pagination justify-content-center">
                                                                         <li class="page-item <c:if test='${currentPage == 1}'>disabled</c:if>">
-                                                                            <a class="page-link" href="Purchase?search=${search}&startDate=${startDate}&endDate=${endDate}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${currentPage - 1}">Previous</a>
+                                                                            <a class="page-link" href="Purchase?search=${search}&warehouseName=${warehouseName}&purchaseID=${purchaseID}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${currentPage - 1}">Previous</a>
                                                                         </li>
                                                                         <c:forEach var="i" begin="1" end="${totalPages}">
                                                                             <li class="page-item <c:if test='${i == currentPage}'>active</c:if>">
-                                                                                <a class="page-link" href="Purchase?search=${search}&startDate=${startDate}&endDate=${endDate}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${i}">${i}</a>
+                                                                                <a class="page-link" href="Purchase?search=${search}&warehouseName=${warehouseName}&purchaseID=${purchaseID}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${i}">${i}</a>
                                                                             </li>
                                                                         </c:forEach>
                                                                         <li class="page-item <c:if test='${currentPage == totalPages}'>disabled</c:if>">
-                                                                            <a class="page-link" href="Purchase?search=${search}&startDate=${startDate}&endDate=${endDate}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${currentPage + 1}">Next</a>
+                                                                            <a class="page-link" href="Purchase?search=${search}&warehouseName=${warehouseName}&purchaseID=${purchaseID}&minTotalAmount=${minTotalAmount}&maxTotalAmount=${maxTotalAmount}&page=${currentPage + 1}">Next</a>
                                                                         </li>
                                                                     </ul>
                                                                 </nav>
