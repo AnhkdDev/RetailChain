@@ -18,10 +18,74 @@
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
 </head>
 <body>
+    <div class="theme-loader">
+        <div class="loader-track">
+            <div class="preloader-wrapper">
+                <div class="spinner-layer spinner-blue"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div>
+                <div class="spinner-layer spinner-red"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div>
+                <div class="spinner-layer spinner-yellow"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div>
+                <div class="spinner-layer spinner-green"><div class="circle-clipper left"><div class="circle"></div></div><div class="gap-patch"><div class="circle"></div></div><div class="circle-clipper right"><div class="circle"></div></div></div>
+            </div>
+        </div>
+    </div>
     <div id="pcoded" class="pcoded">
         <div class="pcoded-overlay-box"></div>
         <div class="pcoded-container navbar-wrapper">
-            <!-- [Header same as index.jsp, omitted for brevity] -->
+            <nav class="navbar header-navbar pcoded-header">
+                <div class="navbar-wrapper">
+                    <div class="navbar-logo">
+                        <a href="index.jsp"><img class="img-fluid" src="assets/images/logo.png" alt="Store-Logo" /></a>
+                        <a class="mobile-menu waves-effect waves-light" id="mobile-collapse" href="#!"><i class="ti-menu"></i></a>
+                    </div>
+                    <div class="navbar-container container-fluid">
+                        <ul class="nav-left">
+                            <li><div class="sidebar_toggle"><a href="javascript:void(0)"><i class="ti-menu"></i></a></div></li>
+                            <li class="header-search">
+                                <div class="main-search morphsearch-search">
+                                    <div class="input-group">
+                                        <span class="input-group-addon search-close"><i class="ti-close"></i></span>
+                                        <input type="text" class="form-control" >
+                                        <span class="input-group-addon search-btn"><i class="ti-search"></i></span>
+                                    </div>
+                                </div>
+                            </li>
+                        </ul>
+                        <ul class="nav-right">
+                            <li class="header-notification">
+                                <a href="#!" class="waves-effect waves-light">
+                                    <i class="ti-bell"></i>
+                                    <span class="badge bg-c-red">3</span>
+                                </a>
+                                <ul class="show-notification">
+                                    <li><h6>Notifications</h6><label class="label label-danger">New</label></li>
+                                    <li class="waves-effect waves-light">
+                                        <div class="media">
+                                            <div class="media-body">
+                                                <h5 class="notification-user">Low Stock Alert</h5>
+                                                <p class="notification-msg">Product XYZ is below minimum stock level.</p>
+                                                <span class="notification-time">2025-05-22 01:53</span>
+                                            </div>
+                                        </div>
+                                    </li>
+                                    <li><a href="notifications.jsp" class="b-b-primary text-primary">View All Notifications</a></li>
+                                </ul>
+                            </li>
+                            <li class="user-profile header-notification">
+                                <a href="#!" class="waves-effect waves-light">
+                                    <img src="assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
+                                    <span><c:out value="${sessionScope.user.fullName}"/></span>
+                                    <i class="ti-angle-down"></i>
+                                </a>
+                                <ul class="show-notification profile-notification">
+                                    <li><a href="user-profile.jsp"><i class="ti-user"></i> Profile</a></li>
+                                    <li><a href="settings.jsp"><i class="ti-settings"></i> Settings</a></li>
+                                    <li><a href="logout.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </nav>
             <div class="pcoded-main-container">
                 <div class="pcoded-wrapper">
                     <nav class="pcoded-navbar">
@@ -45,7 +109,7 @@
                             <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
+                                        <input type="text" name="search" class="form-control" >
                                         <span class="form-bar"></span>
                                         <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
                                     </div>
@@ -69,7 +133,7 @@
                                         <li class="active"><a href="products.jsp">View Products</a></li>
                                         <li><a href="add-product.jsp">Add Product</a></li>
                                         <li><a href="categories.jsp">Manage Categories</a></li>
-                                      
+                                        
                                     </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">
@@ -250,4 +314,3 @@
     <script type="text/javascript" src="assets/js/script.js"></script>
 </body>
 </html>
-

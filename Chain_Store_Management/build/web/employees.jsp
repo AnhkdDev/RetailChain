@@ -178,7 +178,7 @@
                             <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
+                                        <input type="text" name="search" class="form-control" >
                                         <span class="form-bar"></span>
                                         <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
                                     </div>
@@ -202,8 +202,7 @@
                                         <li><a href="products.jsp">View Products</a></li>
                                         <li><a href="add-product.jsp">Add Product</a></li>
                                         <li><a href="categories.jsp">Manage Categories</a></li>
-                                        <li><a href="sizes.jsp">Manage Sizes</a></li>
-                                        <li><a href="colors.jsp">Manage Colors</a></li>
+                                       
                                     </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">

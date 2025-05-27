@@ -15083,9 +15083,7 @@ pre.line-numbers > code {
     .header-navbar .navbar-wrapper .navbar-logo {
       width: 100% !important; }
       .header-navbar .navbar-wrapper .navbar-logo a img {
-        display: block !important;
-      width: 50px;     /* bạn có thể chỉnh lại ví dụ 80px, 120px, v.v. */
-    height: auto; }
+        display: block !important; }
       .header-navbar .navbar-wrapper .navbar-logo .mobile-menu {
         right: auto;
         left: 0;
