@@ -25,7 +25,12 @@
             </web-module-libraries>
             <web-module-additional-libraries/>
             <source-roots>
+<<<<<<< HEAD
                 <root id="src.dir" name="Source Packages"/>
+=======
+                <root id="src.dir"/>
+                <root id="src.dir"/>
+>>>>>>> ba80da5fd3a14990495d320bffc6cf4c40dac542
             </source-roots>
             <test-roots>
                 <root id="test.src.dir" name="Test Packages"/>
