@@ -107,7 +107,7 @@
                                     <div class="main-search morphsearch-search">
                                         <div class="input-group">
                                             <span class="input-group-addon search-close"><i class="ti-close"></i></span>
-                                            <input type="text" class="form-control" >
+                                            <input type="text" class="form-control">
                                             <span class="input-group-addon search-btn"><i class="ti-search"></i></span>
                                         </div>
                                     </div>
@@ -124,6 +124,15 @@
                                             <h6>Notifications</h6>
                                             <label class="label label-danger">New</label>
                                         </li>
+                                        <c:if test="${empty notifications}">
+                                            <li class="waves-effect waves-light">
+                                                <div class="media">
+                                                    <div class="media-body">
+                                                        <p class="notification-msg">No new notifications.</p>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </c:if>
                                         <c:forEach var="notification" items="${notifications}">
                                             <li class="waves-effect waves-light">
                                                 <div class="media">
@@ -180,7 +189,7 @@
                                 <div class="p-15 p-b-0">
                                     <form class="form-material">
                                         <div class="form-group form-primary">
-                                            <input type="text" name="search" class="form-control" >
+                                            <input type="text" name="search" class="form-control">
                                             <span class="form-bar"></span>
                                             <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
                                         </div>
@@ -204,7 +213,6 @@
                                             <li><a href="products.jsp">View Products</a></li>
                                             <li><a href="add-product.jsp">Add Product</a></li>
                                             <li><a href="categories.jsp">Manage Categories</a></li>
-
                                         </ul>
                                     </li>
                                     <li class="pcoded-hasmenu">
@@ -236,13 +244,8 @@
                                             <span class="pcoded-mtext">Purchases</span>
                                             <span class="pcoded-mcaret"></span>
                                         </a>
-                                        
-                                        
-                                        
-                                        
-                                        <!--                                    hihihihi-->
                                         <ul class="pcoded-submenu">
-                                            <li><a href="<%= request.getContextPath() %>/Purchase"  >View Purchases</a></li>
+                                            <li><a href="<%= request.getContextPath() %>/Purchase">View Purchases</a></li>
                                             <li><a href="<%= request.getContextPath() %>/Purchase?action=create">Create Purchase</a></li>
                                         </ul>
                                     </li>
@@ -271,19 +274,7 @@
                                     </li>
                                     <li>
                                         <a href="stores.jsp" class="waves-effect waves-dark">
-                                            <span class="pcoded-micon"><
-                                                <a href="customers.jsp" class="waves-effect waves-dark">
-                                                    <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
-                                                    <span class="pcoded-mtext">Customers</span>
-                                                </a>
-                                                </li>
-                                                <li>
-                                                    <a href="cashflows.jsp" class="waves-effect waves-dark">
-                                                        <span class="pcoded-micon"><i class="ti-money"></i></span>
-                                                        <span class="pcoded-mtext">Cash Flow</span>
-                                                    </a>
-                                                </li>
-                                                <li>i class="ti-shopping-cart"></i></span>
+                                            <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
                                             <span class="pcoded-mtext">Stores</span>
                                         </a>
                                     </li>
@@ -335,7 +326,7 @@
                                                         <div class="card-block">
                                                             <div class="row align-items-center">
                                                                 <div class="col-8">
-                                                                    <h4 class="text-c-purple"><fmt:formatNumber value="${totalSales}" type="currency"/></h4>
+                                                                    <h4 class="text-c-purple"><fmt:formatNumber value="${totalSales}" type="currency" currencySymbol="₫"/></h4>
                                                                     <h6 class="text-muted m-b-0">Total Sales (Today)</h6>
                                                                 </div>
                                                                 <div class="col-4 text-right">
@@ -472,6 +463,11 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
+                                                                        <c:if test="${empty lowInventoryItems}">
+                                                                            <tr>
+                                                                                <td colspan="3" class="text-center">No low inventory items found.</td>
+                                                                            </tr>
+                                                                        </c:if>
                                                                         <c:forEach var="item" items="${lowInventoryItems}">
                                                                             <tr>
                                                                                 <td><c:out value="${item.productName}"/></td>
@@ -514,12 +510,17 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
+                                                                        <c:if test="${empty recentInvoices}">
+                                                                            <tr>
+                                                                                <td colspan="5" class="text-center">No recent invoices found.</td>
+                                                                            </tr>
+                                                                        </c:if>
                                                                         <c:forEach var="invoice" items="${recentInvoices}">
                                                                             <tr>
                                                                                 <td><c:out value="${invoice.invoiceID}"/></td>
                                                                                 <td><fmt:formatDate value="${invoice.invoiceDate}" pattern="dd-MM-yyyy"/></td>
                                                                                 <td><c:out value="${invoice.customerName}"/></td>
-                                                                                <td><fmt:formatNumber value="${invoice.totalAmount}" type="currency"/></td>
+                                                                                <td><fmt:formatNumber value="${invoice.totalAmount}" type="currency" currencySymbol="₫"/></td>
                                                                                 <td><label class="label label-<c:out value="${invoice.status == 'Pending' ? 'warning' : 'success'}"/>"><c:out value="${invoice.status}"/></label></td>
                                                                             </tr>
                                                                         </c:forEach>
@@ -557,12 +558,17 @@
                                                                         </tr>
                                                                     </thead>
                                                                     <tbody>
+                                                                        <c:if test="${empty recentPurchases}">
+                                                                            <tr>
+                                                                                <td colspan="4" class="text-center">No recent purchases found.</td>
+                                                                            </tr>
+                                                                        </c:if>
                                                                         <c:forEach var="purchase" items="${recentPurchases}">
                                                                             <tr>
                                                                                 <td><c:out value="${purchase.purchaseID}"/></td>
                                                                                 <td><fmt:formatDate value="${purchase.purchaseDate}" pattern="dd-MM-yyyy"/></td>
                                                                                 <td><c:out value="${purchase.supplierName}"/></td>
-                                                                                <td><fmt:formatNumber value="${purchase.totalAmount}" type="currency"/></td>
+                                                                                <td><fmt:formatNumber value="${purchase.totalAmount}" type="currency" currencySymbol="₫"/></td>
                                                                             </tr>
                                                                         </c:forEach>
                                                                     </tbody>
@@ -617,18 +623,33 @@
         <script>
             $(document).ready(function () {
                 var ctx = document.getElementById('sales-analytics').getContext('2d');
+                
+                // Lấy dữ liệu từ server bằng JSTL
+                var labels = [];
+                var salesData = [];
+                
+                <c:if test="${empty dailySales}">
+                    // Dữ liệu mặc định nếu không có doanh thu
+                    labels = ['2025-05-22', '2025-05-23', '2025-05-24', '2025-05-25', '2025-05-26', '2025-05-27', '2025-05-28'];
+                    salesData = [0, 0, 0, 0, 0, 0, 0];
+                </c:if>
+                <c:forEach var="sale" items="${dailySales}">
+                    labels.push("${sale.date}");
+                    salesData.push(${sale.amount});
+                </c:forEach>
+
                 var salesChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ['2025-05-16', '2025-05-17', '2025-05-18', '2025-05-19', '2025-05-20', '2025-05-21', '2025-05-22'],
+                        labels: labels,
                         datasets: [{
-                                label: 'Daily Sales',
-                                data: [12000, 15000, 10000, 18000, 20000, 17000, 22000],
-                                borderColor: '#7c4dff',
-                                backgroundColor: 'rgba(124, 77, 255, 0.2)',
-                                fill: true,
-                                tension: 0.4
-                            }]
+                            label: 'Daily Sales',
+                            data: salesData,
+                            borderColor: '#7c4dff',
+                            backgroundColor: 'rgba(124, 77, 255, 0.2)',
+                            fill: true,
+                            tension: 0.4
+                        }]
                     },
                     options: {
                         scales: {
@@ -636,7 +657,7 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'Sales Amount ($)'
+                                    text: 'Sales Amount (₫)'
                                 }
                             },
                             x: {

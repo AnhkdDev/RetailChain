@@ -1,2 +1,1 @@
-PurchaseDAO
 dao.PurchaseDAO
