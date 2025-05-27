@@ -399,14 +399,6 @@
                         <script src="assets/js/pcoded.min.js"></script>
                         <script src="assets/js/vertical-layout.min.js"></script>
                         <script src="assets/js/script.js"></script>
-                        <!--    <script>
-                                // Clear form on page reload to prevent stale data
-                                window.onload = function() {
-                                    if (!window.location.search.includes('success') && !window.location.search.includes('error')) {
-                                        document.querySelector('form').reset();
-                                    }
-                                };
-                            </script>-->
                         <script>
                             // Tự động submit form khi trang được tải lần đầu
                             document.addEventListener('DOMContentLoaded', function () {
@@ -434,15 +426,6 @@
                                     form.submit();
                                 }
                             });
-
-//                            // Tự động submit sau khi nhập product name (với delay)
-//                            let searchTimeout;
-//                            document.getElementById('productNameInput').addEventListener('input', function () {
-//                                clearTimeout(searchTimeout);
-//                                searchTimeout = setTimeout(() => {
-//                                    this.form.submit();
-//                                }, 500);
-//                            });
                         </script>
                         </body>
                         </html>
