@@ -1,5 +1,3 @@
-<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
-<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -133,7 +131,8 @@
                                         <li><a href="products.jsp">View Products</a></li>
                                         <li><a href="add-product.jsp">Add Product</a></li>
                                         <li><a href="categories.jsp">Manage Categories</a></li>
-                                       
+                                        <li><a href="sizes.jsp">Manage Sizes</a></li>
+                                        <li><a href="colors.jsp">Manage Colors</a></li>
                                     </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">
