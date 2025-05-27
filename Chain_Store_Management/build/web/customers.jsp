@@ -26,8 +26,23 @@
     <link rel="stylesheet" type="text/css" href="assets/icon/font-awesome/css/font-awesome.min.css">
     <!-- Scrollbar.css -->
     <link rel="stylesheet" type="text/css" href="assets/css/jquery.mCustomScrollbar.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap4.min.css"/>
     <!-- Style.css -->
     <link rel="stylesheet" type="text/css" href="assets/css/style.css">
+    <style>
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .dt-buttons {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
     <!-- Pre-loader start -->
@@ -178,7 +193,7 @@
                             <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
+                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees...">
                                         <span class="form-bar"></span>
                                         <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
                                     </div>
@@ -311,6 +326,50 @@
                                 <div class="page-wrapper">
                                     <div class="page-body">
                                         <div class="row">
+                                            <!-- Search and Filter Form -->
+                                            <div class="col-xl-12 col-md-12">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h5>Search & Filter Customers</h5>
+                                                    </div>
+                                                    <div class="card-block">
+                                                        <form action="customers" method="get" class="form-material">
+                                                            <div class="row">
+                                                                <div class="col-md-3">
+                                                                    <div class="form-group">
+                                                                        <label>Search by Name/Phone/Email</label>
+                                                                        <input type="text" name="searchQuery" class="form-control" value="${param.searchQuery}" placeholder="Enter name, phone, or email">
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-2">
+                                                                    <div class="form-group">
+                                                                        <label>Gender</label>
+                                                                        <select name="gender" class="form-control">
+                                                                            <option value="">All</option>
+                                                                            <option value="Male" ${param.gender == 'Male' ? 'selected' : ''}>Male</option>
+                                                                            <option value="Female" ${param.gender == 'Female' ? 'selected' : ''}>Female</option>
+                                                                            <option value="Other" ${param.gender == 'Other' ? 'selected' : ''}>Other</option>
+                                                                        </select>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-3">
+                                                                    <div class="form-group">
+                                                                        <label>Total Spent Range</label>
+                                                                        <div class="input-group">
+                                                                            <input type="number" name="minSpent" class="form-control" value="${param.minSpent}" placeholder="Min">
+                                                                            <input type="number" name="maxSpent" class="form-control" value="${param.maxSpent}" placeholder="Max">
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                                <div class="col-md-4">
+                                                                    <button type="submit" class="btn btn-primary mt-4">Apply Filter</button>
+                                                                    <a href="customers" class="btn btn-secondary mt-4">Reset</a>
+                                                                </div>
+                                                            </div>
+                                                        </form>
+                                                    </div>
+                                                </div>
+                                            </div>
                                             <!-- Customers Table -->
                                             <div class="col-xl-12 col-md-12">
                                                 <div class="card table-card">
@@ -331,7 +390,7 @@
                                                                     <i class="fa fa-plus"></i> Add New Customer
                                                                 </a>
                                                             </div>
-                                                            <table class="table table-hover">
+                                                            <table id="customerTable" class="table table-hover table-bordered">
                                                                 <thead>
                                                                     <tr>
                                                                         <th>Customer ID</th>
@@ -357,6 +416,9 @@
                                                                             <td><fmt:formatNumber value="${customer.totalSpent}" type="currency"/></td>
                                                                             <td><fmt:formatDate value="${customer.createdAt}" pattern="dd-MM-yyyy HH:mm"/></td>
                                                                             <td>
+                                                                                <a href="customer-purchases.jsp?customerID=${customer.customerID}" class="btn btn-sm btn-info waves-effect waves-light" title="View Purchases">
+                                                                                    <i class="fa fa-shopping-cart"></i>
+                                                                                </a>
                                                                                 <a href="edit-customer.jsp?customerID=${customer.customerID}" class="btn btn-sm btn-primary waves-effect waves-light" title="Edit">
                                                                                     <i class="fa fa-edit"></i>
                                                                                 </a>
@@ -396,10 +458,47 @@
     <!-- Slimscroll js -->
     <script type="text/javascript" src="assets/js/SmoothScroll.js"></script>
     <script src="assets/js/jquery.mCustomScrollbar.concat.min.js"></script>
+    <!-- DataTables JS -->
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap4.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
     <!-- Menu js -->
     <script src="assets/js/pcoded.min.js"></script>
     <script src="assets/js/vertical-layout.min.js"></script>
     <!-- Custom js -->
     <script type="text/javascript" src="assets/js/script.js"></script>
+    <!-- DataTables Initialization -->
+    <script>
+        $(document).ready(function() {
+            $('#customerTable').DataTable({
+                "paging": true,
+                "ordering": true,
+                "info": true,
+                "searching": false, // Disable DataTables' built-in search since we have a custom search form
+                "dom": '<"dt-buttons"Bf>rtip',
+                "buttons": [
+                    {
+                        extend: 'csv',
+                        text: 'Export CSV',
+                        className: 'btn btn-sm btn-primary'
+                    },
+                    {
+                        extend: 'pdf',
+                        text: 'Export PDF',
+                        className: 'btn btn-sm btn-primary'
+                    }
+                ],
+                "columnDefs": [
+                    { "orderable": false, "targets": 8 } // Disable sorting on Actions column
+                ]
+            });
+        });
+    </script>
 </body>
 </html>

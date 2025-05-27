@@ -6,28 +6,32 @@ import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DBContext {
-    protected Connection connection;
-    public DBContext()
-    {
 
+public class DBContext {
+
+    protected Connection connection;
+
+    public DBContext() {
+       
+        //NOTE:  user = "sa"; pass = "123"; url = "jdbc:sqlserver://  Tên_SQL  :1433;databaseName=  Tên_DB   ";
+        
         try {
             String user = "sa";
             String pass = "123";
-            String url = "jdbc:sqlserver://localhost\\SQLEXPRESS:1433;databaseName=Shop";
+            String url = "jdbc:sqlserver://QUY:1433;databaseName=Shop";
             Class.forName("com.microsoft.sqlserver.jdbc.SQLServerDriver");
             connection = DriverManager.getConnection(url, user, pass);
         } catch (ClassNotFoundException | SQLException ex) {
             Logger.getLogger(DBContext.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
-    public boolean check(){
-        return connection!=null?true:false;
-    }
-    
+
     public static void main(String[] args) {
-        DBContext s =  new DBContext();
-        System.out.println(s.check());
+        if ((new DBContext()).connection != null) {
+            System.out.println("Connect success");
+        } else {
+            System.out.println("Connect fail");
+        }
     }
+
 }
