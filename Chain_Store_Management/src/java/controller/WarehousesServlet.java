@@ -1,10 +1,7 @@
-
-
-
 package controller;
 
-import dal.StoresDAO;
-import dal.WarehousesDAO;
+import DAO.StoresDAO;
+import DAO.WarehousesDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -12,7 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URLEncoder;
-import models.Warehouses;
+import model.Warehouses;
 
 @WebServlet(name = "WarehouseServlet", urlPatterns = {"/warehouses"})
 public class WarehousesServlet extends HttpServlet {

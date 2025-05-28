@@ -1,8 +1,8 @@
 package controller;
 
-import dal.CategoriesDAO;
-import dal.InventoriesDAO;
-import dal.WarehousesDAO;
+import DAO.CategoriesDAO;
+import DAO.InventoriesDAO;
+import DAO.WarehousesDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -64,11 +64,3 @@ public class InventoriesServlet extends HttpServlet {
     }
 }
     
-
-
-
-
-
-
-
-
