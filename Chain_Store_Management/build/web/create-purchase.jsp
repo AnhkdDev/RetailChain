@@ -251,8 +251,8 @@
                                         <li><a href="add-employee.jsp">Add Employee</a></li>
                                     </ul>
                                 </li>
-<li>
-                                    <a href="customers.jsp" class="waves-effect waves-dark">
+                                <li>
+                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>
