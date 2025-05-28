@@ -175,7 +175,7 @@
                                     </li>
                                 </ul>
                             </div>
-                            <div class="p-15 p-b-0">
+<!--                            <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
                                         <input type="text" name="search" class="form-control" placeholder="" required="">
@@ -183,7 +183,7 @@
                                         <label class="float-label"><i class="fa fa-search m-r-5"></i> Search</label>
                                     </div>
                                 </form>
-                            </div>
+                            </div>-->
                             <div class="pcoded-navigation-label">Store Management</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li>

@@ -305,6 +305,7 @@
                                     </div>
                                 </div>
                             </div>
+
                         </div>
                         <div class="pcoded-inner-content">
                             <div class="main-body">
@@ -460,11 +461,13 @@
                                                                             <td><c:out value="${item.warehouseName}"/></td>
                                                                             <td><c:out value="${item.quantity}"/></td>
                                                                         </tr>
+
                                                                     </c:forEach>
                                                                 </tbody>
                                                             </table>
                                                             <div class="text-right m-r-20">
                                                                 <a href="${pageContext.request.contextPath}/inventory.jsp" class="b-b-primary text-primary">View All Inventory</a>
+
                                                             </div>
                                                         </div>
                                                     </div>
@@ -504,11 +507,13 @@
                                                                             <td><fmt:formatNumber value="${invoice.totalAmount}" type="currency"/></td>
                                                                             <td><label class="label label-<c:out value="${invoice.status == 'Pending' ? 'warning' : 'success'}"/>"><c:out value="${invoice.status}"/></label></td>
                                                                         </tr>
+
                                                                     </c:forEach>
                                                                 </tbody>
                                                             </table>
                                                             <div class="text-right m-r-20">
                                                                 <a href="${pageContext.request.contextPath}/invoices.jsp" class="b-b-primary text-primary">View All Invoices</a>
+
                                                             </div>
                                                         </div>
                                                     </div>
@@ -546,11 +551,13 @@
                                                                             <td><c:out value="${purchase.supplierName}"/></td>
                                                                             <td><fmt:formatNumber value="${purchase.totalAmount}" type="currency"/></td>
                                                                         </tr>
+
                                                                     </c:forEach>
                                                                 </tbody>
                                                             </table>
                                                             <div class="text-right m-r-20">
                                                                 <a href="${pageContext.request.contextPath}/purchases.jsp" class="b-b-primary text-primary">View All Purchases</a>
+
                                                             </div>
                                                         </div>
                                                     </div>
@@ -598,13 +605,30 @@
         <script>
             $(document).ready(function () {
                 var ctx = document.getElementById('sales-analytics').getContext('2d');
+                
+                // Lấy dữ liệu từ server bằng JSTL
+                var labels = [];
+                var salesData = [];
+                
+                <c:if test="${empty dailySales}">
+                    // Dữ liệu mặc định nếu không có doanh thu
+                    labels = ['2025-05-22', '2025-05-23', '2025-05-24', '2025-05-25', '2025-05-26', '2025-05-27', '2025-05-28'];
+                    salesData = [0, 0, 0, 0, 0, 0, 0];
+                </c:if>
+                <c:forEach var="sale" items="${dailySales}">
+                    labels.push("${sale.date}");
+                    salesData.push(${sale.amount});
+                </c:forEach>
+
                 var salesChart = new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: ['2025-05-16', '2025-05-17', '2025-05-18', '2025-05-19', '2025-05-20', '2025-05-21', '2025-05-22'],
+                        labels: labels,
                         datasets: [{
                             label: 'Daily Sales',
+
                             data: [12000, 15000, 10000, 18000, 20000, 17000, 22000],
+
                             borderColor: '#7c4dff',
                             backgroundColor: 'rgba(124, 77, 255, 0.2)',
                             fill: true,
@@ -617,7 +641,7 @@
                                 beginAtZero: true,
                                 title: {
                                     display: true,
-                                    text: 'Sales Amount ($)'
+                                    text: 'Sales Amount (₫)'
                                 }
                             },
                             x: {
