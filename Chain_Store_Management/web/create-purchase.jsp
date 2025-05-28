@@ -147,7 +147,7 @@
                                 <ul class="show-notification profile-notification">
                                     <li><a href="user-profile.jsp"><i class="ti-user"></i> Profile</a></li>
                                     <li><a href="settings.jsp"><i class="ti-settings"></i> Settings</a></li>
-                                    <li><a href="logout.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
+                                    <li><a href="logout.jsp"><i class="ti-log-out"></i> Logout</a></li>
                                 </ul>
                             </li>
                         </ul>
@@ -169,18 +169,18 @@
                             <div class="main-menu-content">
                                 <ul>
                                     <li class="more-details">
-                                        <a href="user-profile.jsp"><i class="ti-user"></i>View Profile</a>
-                                        <a href="settings.jsp"><i class="ti-settings"></i>Settings</a>
-                                        <a href="logout.jsp"><i class="ti-layout-sidebar-left"></i>Logout</a>
+                                        <a href="user-profile.jsp"><i class="ti-user"></i> View Profile</a>
+                                        <a href="settings.jsp"><i class="ti-settings"></i> Settings</a>
+                                        <a href="logout.jsp"><i class="ti-log-out"></i> Logout</a>
                                     </li>
                                 </ul>
                             </div>
                             <div class="p-15 p-b-0">
                                 <form class="form-material">
                                     <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
+                                        <input type="text" name="search" class="form-control" placeholder="" required="">
                                         <span class="form-bar"></span>
-                                        <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
+                                        <label class="float-label"><i class="fa fa-search m-r-5"></i> Search</label>
                                     </div>
                                 </form>
                             </div>
@@ -196,8 +196,8 @@
                                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-package"></i></span>
                                         <span class="pcoded-mtext">Products</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
+                                        <span class="caret"></span>
+                                    </span></a>
                                     <ul class="pcoded-submenu">
                                         <li><a href="products.jsp">View Products</a></li>
                                         <li><a href="add-product.jsp">Add Product</a></li>
@@ -217,7 +217,7 @@
                                         <li><a href="warehouses.jsp">Manage Warehouses</a></li>
                                     </ul>
                                 </li>
-                                <li class="pcoded-hasmenu">
+<li class="pcoded-hasmenu">
                                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-receipt"></i></span>
                                         <span class="pcoded-mtext">Invoices</span>
@@ -229,18 +229,18 @@
                                         <li><a href="bank-transactions.jsp">Bank Transactions</a></li>
                                     </ul>
                                 </li>
-                                <li class="pcoded-hasmenu active">
+<li class="pcoded-hasmenu active">
                                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-truck"></i></span>
                                         <span class="pcoded-mtext">Purchases</span>
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                     <ul class="pcoded-submenu">
-                                        <li><a href="purchases.jsp">View Purchases</a></li>
+                                        <li><a href="Purchase">View Purchases</a></li>
                                         <li class="active"><a href="create-purchase.jsp">Create Purchase</a></li>
                                     </ul>
                                 </li>
-                                <li class="pcoded-hasmenu">
+<li class="pcoded-hasmenu">
                                     <a href="javascript:void(0)" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-user"></i></span>
                                         <span class="pcoded-mtext">Employees</span>
@@ -257,31 +257,31 @@
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>
                                 </li>
-                                <li>
+<li>
                                     <a href="cashflows.jsp" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-money"></i></span>
                                         <span class="pcoded-mtext">Cash Flow</span>
                                     </a>
                                 </li>
-                                <li>
+<li>
                                     <a href="stores.jsp" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
                                         <span class="pcoded-mtext">Stores</span>
                                     </a>
                                 </li>
-                                <li>
+<li>
                                     <a href="notifications.jsp" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-bell"></i></span>
                                         <span class="pcoded-mtext">Notifications</span>
                                     </a>
                                 </li>
-                                <li>
+<li>
                                     <a href="reports.jsp" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-bar-chart"></i></span>
                                         <span class="pcoded-mtext">Reports</span>
                                     </a>
                                 </li>
-                            </ul>
+</ul>
                         </div>
                     </nav>
                     <!-- Main Content -->
@@ -300,7 +300,7 @@
                                             <li class="breadcrumb-item">
                                                 <a href="index.jsp"><i class="fa fa-home"></i></a>
                                             </li>
-                                            <li class="breadcrumb-item"><a href="#!">Purchases</a></li>
+                                            <li class="breadcrumb-item"><a href="Purchase">Purchases</a></li>
                                             <li class="breadcrumb-item"><a href="#!">Create Purchase</a></li>
                                         </ul>
                                     </div>
@@ -318,10 +318,17 @@
                                                         <h5>New Purchase</h5>
                                                     </div>
                                                     <div class="card-block">
-                                                        <form action="purchaseAction" method="post">
+                                                        <c:if test="${not empty errorMessage}">
+                                                            <div class="alert alert-danger">${errorMessage}</div>
+                                                        </c:if>
+                                                        <c:if test="${not empty successMessage}">
+                                                            <div class="alert alert-success">${successMessage}</div>
+                                                        </c:if>
+                                                        <form action="Purchase" method="post">
+                                                            <input type="hidden" name="action" value="create">
                                                             <div class="form-group">
                                                                 <label for="supplierName">Supplier Name</label>
-                                                                <input type="text" class="form-control" id="supplierName" name="supplierName" required>
+                                                                <input type="text" class="form-control" id="supplierName" name="supplierName" placeholder="Enter supplier name" required>
                                                             </div>
                                                             <div class="form-group">
                                                                 <label for="warehouseID">Warehouse</label>
@@ -334,7 +341,7 @@
                                                             </div>
                                                             <h6>Purchase Details</h6>
                                                             <div id="purchaseDetails">
-                                                                <div class="row">
+                                                                <div class="row" id="detail_1">
                                                                     <div class="col-md-4 form-group">
                                                                         <label for="productID_1">Product</label>
                                                                         <select class="form-control" id="productID_1" name="productID_1" required>
@@ -346,11 +353,11 @@
                                                                     </div>
                                                                     <div class="col-md-3 form-group">
                                                                         <label for="quantity_1">Quantity</label>
-                                                                        <input type="number" class="form-control" id="quantity_1" name="quantity_1" min="1" required>
+                                                                        <input type="number" class="form-control" id="quantity_1" name="quantity_1" min="1" placeholder="Enter quantity" required>
                                                                     </div>
                                                                     <div class="col-md-3 form-group">
                                                                         <label for="costPrice_1">Cost Price</label>
-                                                                        <input type="number" step="0.01" class="form-control" id="costPrice_1" name="costPrice_1" min="0" required>
+                                                                        <input type="number" step="0.01" class="form-control" id="costPrice_1" name="costPrice_1" min="0" placeholder="Enter cost price" required>
                                                                     </div>
                                                                     <div class="col-md-2 form-group">
                                                                         <label> </label>
@@ -412,11 +419,11 @@
                     </div>
                     <div class="col-md-3 form-group">
                         <label for="quantity_${detailCount}">Quantity</label>
-                        <input type="number" class="form-control" id="quantity_${detailCount}" name="quantity_${detailCount}" min="1" required>
+                        <input type="number" class="form-control" id="quantity_${detailCount}" name="quantity_${detailCount}" min="1" placeholder="Enter quantity" required>
                     </div>
                     <div class="col-md-3 form-group">
                         <label for="costPrice_${detailCount}">Cost Price</label>
-                        <input type="number" step="0.01" class="form-control" id="costPrice_${detailCount}" name="costPrice_${detailCount}" min="0" required>
+                        <input type="number" step="0.01" class="form-control" id="costPrice_${detailCount}" name="costPrice_${detailCount}" min="0" placeholder="Enter cost price" required>
                     </div>
                     <div class="col-md-2 form-group">
                         <label> </label>
