@@ -21,7 +21,7 @@ public class CustomerDAO {
     public DBContext getDBContext() {
         return dbContext;
     }
-
+   //lay tat o cua custommer
     public List<Customer> getAllCustomers() throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -57,6 +57,7 @@ public class CustomerDAO {
         return customers;
     }
 
+    // Lấy thông tin khách hàng dựa trên ID
     public Customer getCustomerById(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -91,7 +92,7 @@ public class CustomerDAO {
         }
         return null;
     }
-
+  // Lấy danh sách hóa đơn của một khách hàng dựa trên ID
     public List<Invoice> getCustomerInvoices(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -123,7 +124,7 @@ public class CustomerDAO {
         }
         return invoices;
     }
-
+  // Tìm kiếm khách hàng với các thông tin tùy chọn
     public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
