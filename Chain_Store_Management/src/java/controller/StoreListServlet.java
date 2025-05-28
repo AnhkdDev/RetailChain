@@ -1,4 +1,4 @@
-package controllerStore;
+package controller;
 
 import DAO.StoreDAO;
 import DAO.StoreDAO.StorePage;

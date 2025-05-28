@@ -1,31 +1,29 @@
-package controllerCustomer;
+package controller;
 
 import DAO.CustomerDAO;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
-import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Customer;
 
-/**
- * Servlet to handle customer list display with pagination and search.
- *
- * @author Admin
- */
-@WebServlet(name = "CustomerListServlet", urlPatterns = {"/CustomerListServlet"})
-public class CustomerListServlet extends HttpServlet {
+@WebServlet(name = "SearchCustomerServlet", urlPatterns = {"/SearchCustomerServlet"})
+public class SearchCustomerServlet extends HttpServlet {
 
     private static final int RECORDS_PER_PAGE = 5;
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
@@ -45,20 +43,26 @@ public class CustomerListServlet extends HttpServlet {
 
             int currentPage = 1;
             if (request.getParameter("page") != null) {
-                currentPage = Integer.parseInt(request.getParameter("page"));
+                try {
+                    currentPage = Integer.parseInt(request.getParameter("page"));
+                } catch (NumberFormatException e) {
+                    currentPage = 1;
+                }
             }
 
             int offset = (currentPage - 1) * RECORDS_PER_PAGE;
 
             List<Customer> allCustomers;
-            if (search != null || gender != null || membershipLevel != null) {
-                allCustomers = customerDAO.searchCustomers(search, gender, membershipLevel);
-            } else {
+            if ((search == null || search.trim().isEmpty()) &&
+                (gender == null || gender.trim().isEmpty()) &&
+                (membershipLevel == null || membershipLevel.trim().isEmpty())) {
                 allCustomers = customerDAO.getAllCustomers();
+            } else {
+                allCustomers = customerDAO.searchCustomers(search, gender, membershipLevel);
             }
+
             int totalRecords = allCustomers.size();
             int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-
             int fromIndex = Math.min(offset, totalRecords);
             int toIndex = Math.min(offset + RECORDS_PER_PAGE, totalRecords);
             List<Customer> paginatedCustomers = (totalRecords > 0) ? allCustomers.subList(fromIndex, toIndex) : allCustomers;
@@ -72,7 +76,7 @@ public class CustomerListServlet extends HttpServlet {
 
             request.getRequestDispatcher("customers.jsp").forward(request, response);
         } catch (SQLException e) {
-            e.printStackTrace(); // Consider using a logging framework like SLF4J
+            e.printStackTrace();
             request.setAttribute("message", "Error loading customers: " + e.getMessage());
             request.setAttribute("messageType", "danger");
             request.getRequestDispatcher("customers.jsp").forward(request, response);
@@ -80,16 +84,48 @@ public class CustomerListServlet extends HttpServlet {
             e.printStackTrace();
             request.setAttribute("message", "Invalid page request: " + e.getMessage());
             request.setAttribute("messageType", "danger");
-            request.setAttribute("customers", new java.util.ArrayList<>());
+            request.setAttribute("customers", new ArrayList<>());
             request.setAttribute("currentPage", 1);
             request.setAttribute("totalPages", 1);
             request.getRequestDispatcher("customers.jsp").forward(request, response);
+        } finally {
+            try {
+                if (customerDAO.getDBContext() != null) {
+                    customerDAO.getDBContext().closeConnection();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        String action = request.getParameter("action");
+        if ("delete".equals(action)) {
+            CustomerDAO customerDAO = new CustomerDAO();
+            try {
+                int customerID = Integer.parseInt(request.getParameter("customerID"));
+                customerDAO.deleteCustomer(customerID);
+                request.setAttribute("message", "Customer deleted successfully.");
+                request.setAttribute("messageType", "success");
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+                request.setAttribute("message", "Invalid customer ID.");
+                request.setAttribute("messageType", "danger");
+            } catch (SQLException ex) {
+                Logger.getLogger(SearchCustomerServlet.class.getName()).log(Level.SEVERE, null, ex);
+            } finally {
+                try {
+                    if (customerDAO.getDBContext() != null) {
+                        customerDAO.getDBContext().closeConnection();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         processRequest(request, response);
     }
 
@@ -109,18 +145,19 @@ public class CustomerListServlet extends HttpServlet {
                 customer.setGender(request.getParameter("gender"));
                 customer.setBirthDate(Date.valueOf(request.getParameter("birthDate")));
                 customer.setAddress(request.getParameter("address"));
-                customer.setTotalSpent(Double.parseDouble(request.getParameter("totalSpent")));
-                customer.setCreatedAt(new Timestamp(System.currentTimeMillis())); // Set current time for new customers
+                customer.setCreatedAt(new Timestamp(System.currentTimeMillis()));
 
                 if (customerId != null && !customerId.isEmpty()) {
-                    // Update existing customer
                     customer.setCustomerID(Integer.parseInt(customerId));
                     customerDAO.updateCustomer(customer);
                     request.setAttribute("message", "Customer updated successfully.");
                     request.setAttribute("messageType", "success");
                 } else {
-                    // Insert new customer
-                    customer.setPassword("defaultPassword"); // Set a default password or prompt user
+                    String password = request.getParameter("password");
+                    if (password == null || password.trim().isEmpty()) {
+                        throw new IllegalArgumentException("Password is required for new customers.");
+                    }
+                    customer.setPassword(password);
                     customerDAO.insertCustomer(customer);
                     request.setAttribute("message", "Customer added successfully.");
                     request.setAttribute("messageType", "success");
@@ -133,18 +170,22 @@ public class CustomerListServlet extends HttpServlet {
                 e.printStackTrace();
                 request.setAttribute("message", "Invalid input: " + e.getMessage());
                 request.setAttribute("messageType", "danger");
+            } finally {
+                try {
+                    if (customerDAO.getDBContext() != null) {
+                        customerDAO.getDBContext().closeConnection();
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        } else {
-            // Handle other POST requests (e.g., search form)
-            processRequest(request, response);
         }
 
-        // Reload the customer list
         processRequest(request, response);
     }
 
     @Override
     public String getServletInfo() {
-        return "Servlet to display customer list with pagination and search in the Shop database.";
+        return "Servlet to search and manage customers in the Shop database.";
     }
 }

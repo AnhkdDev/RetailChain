@@ -2,7 +2,7 @@
 <web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
     <servlet>
         <servlet-name>CustomerListServlet</servlet-name>
-        <servlet-class>controllerCustomer.CustomerListServlet</servlet-class>
+        <servlet-class>controller.CustomerListServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>UpdateCustomerServlet</servlet-name>
@@ -14,11 +14,11 @@
     </servlet>
     <servlet>
         <servlet-name>AddCustomerServlet</servlet-name>
-        <servlet-class>controllerCustomer.AddCustomerServlet</servlet-class>
+        <servlet-class>controller.AddCustomerServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>SearchCustomerServlet</servlet-name>
-        <servlet-class>controllerCustomer.SearchCustomerServlet</servlet-class>
+        <servlet-class>controller.SearchCustomerServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>RemoveCustomerServlet</servlet-name>
@@ -26,11 +26,11 @@
     </servlet>
     <servlet>
         <servlet-name>StoreListServlet</servlet-name>
-        <servlet-class>controllerStore.StoreListServlet</servlet-class>
+        <servlet-class>controller.StoreListServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>NotificationServlet</servlet-name>
-        <servlet-class>ControllerNotificationServlet.NotificationServlet</servlet-class>
+        <servlet-class>controller.NotificationServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>CustomerListServlet</servlet-name>
@@ -38,7 +38,7 @@
     </servlet-mapping>
     <servlet>
         <servlet-name>CustomerDetailsServlet</servlet-name>
-        <servlet-class>controllerCustomer.CustomerDetailsServlet</servlet-class>
+        <servlet-class>controller.CustomerDetailsServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>CustomerDetailsServlet</servlet-name>

@@ -1,4 +1,4 @@
-package ControllerNotificationServlet;
+package controller;
 
 import DAO.NotificationDAO;
 import jakarta.servlet.ServletException;

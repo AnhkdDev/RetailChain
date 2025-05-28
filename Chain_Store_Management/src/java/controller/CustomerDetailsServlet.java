@@ -1,4 +1,4 @@
-package controllerCustomer;
+package controller;
 
 import DAO.CustomerDAO;
 import java.sql.*;
