@@ -4,7 +4,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Store Manager Dashboard</title>
+    <title>Admin Store</title>
     <!-- Meta -->
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
@@ -136,7 +136,7 @@
                                         </li>
                                     </c:forEach>
                                     <li>
-                                        <a href="notifications.jsp" class="b-b-primary text-primary">View All Notifications</a>
+                                        <a href="notifications" class="b-b-primary text-primary">View All Notifications</a>
                                     </li>
                                 </ul>
                             </li>
@@ -186,7 +186,7 @@
                                     </div>
                                 </form>
                             </div>
-                            <div class="pcoded-navigation-label">Store Management</div>
+                            <div class="pcoded-navigation-label">Supper Admin</div>
                             <ul class="pcoded-item pcoded-left-item">
                                 <li class="active">
                                     <a href="index.jsp" class="waves-effect waves-dark">
@@ -253,7 +253,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="customers.jsp" class="waves-effect waves-dark">
+                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>
@@ -265,13 +265,13 @@
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="stores.jsp" class="waves-effect waves-dark">
+                                    <a href="stores" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
                                         <span class="pcoded-mtext">Stores</span>
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="notifications.jsp" class="waves-effect waves-dark">
+                                    <a href="notifications" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-bell"></i></span>
                                         <span class="pcoded-mtext">Notifications</span>
                                     </a>
@@ -292,7 +292,7 @@
                                 <div class="row align-items-center">
                                     <div class="col-md-8">
                                         <div class="page-header-title">
-                                            <h5 class="m-b-10">Store Manager Dashboard</h5>
+                                            <h5 class="m-b-10">Admin Store</h5>
                                             <p class="m-b-0">Welcome, <c:out value="${sessionScope.user.fullName}"/>!</p>
                                         </div>
                                     </div>
