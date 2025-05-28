@@ -1,4 +1,4 @@
-package dao;
+package DAO;
 
 import dal.DBContext;
 import java.sql.Connection;

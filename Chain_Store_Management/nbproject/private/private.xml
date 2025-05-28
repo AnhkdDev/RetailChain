@@ -3,21 +3,8 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/DAO/CategoriesDAO.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/web/warehouses.jsp</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/web/index.jsp</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/model/Warehouses.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/DAO/WarehousesDAO.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/DAO/StoresDAO.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/web/invoices.jsp</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/model/Inventories.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/DAO/InventoriesDAO.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/controller/WarehousesServlet.java</file>
             <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/controller/InventoriesServlet.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/model/Stores.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/web/inventory.jsp</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/model/Categories.java</file>
-            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/DAO/PurchaseDAO.java</file>
+            <file>file:/D:/Project_SWP/SWP391-Group4/SWP391-Group4/Chain_Store_Management/src/java/controller/AddCustomerServlet.java</file>
         </group>
     </open-files>
 </project-private>
