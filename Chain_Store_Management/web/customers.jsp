@@ -370,9 +370,7 @@
                                                                                             <button class="btn btn-sm btn-info waves-effect waves-light" data-toggle="modal" data-target="#customerModal" onclick="populateForm('<c:out value="${customer.customerID}"/>', '<c:out value="${customer.fullName}"/>', '<c:out value="${customer.phone}"/>', '<c:out value="${customer.email}"/>', '<c:out value="${customer.gender}"/>', '<fmt:formatDate value="${customer.birthDate}" pattern="yyyy-MM-dd"/>', '<c:out value="${customer.address}"/>')" title="Edit">
                                                                                                 <i class="fa fa-edit"></i>
                                                                                             </button>
-                                                                                            <a href="${pageContext.request.contextPath}/SearchCustomerServlet?action=delete&customerID=${customer.customerID}" class="btn btn-sm btn-danger waves-effect waves-light" title="Delete" onclick="return confirm('Are you sure you want to delete this customer?');">
-                                                                                                <i class="fa fa-trash"></i>
-                                                                                            </a>
+                                                                                            
                                                                                         </td>
                                                                                     </tr>
                                                                                 </c:forEach>
