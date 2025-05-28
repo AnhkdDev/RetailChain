@@ -318,7 +318,7 @@
                                                         <h5>New Invoice</h5>
                                                     </div>
                                                     <div class="card-block">
-                                                        <form action="invoiceAction" method="post">
+                                                        <form action="invoices" method="post">
                                                             <div class="form-group">
                                                                 <label for="storeID">Store</label>
                                                                 <select class="form-control" id="storeID" name="storeID" required>

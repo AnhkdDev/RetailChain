@@ -331,7 +331,9 @@
                                                                         <th>Date</th>
                                                                     </tr>
                                                                 </thead>
-                                                                <tbody>
+                                                                <tbody><c:if test="${empty bankTransactions}">
+    <div class="alert alert-warning">No bank transactions found.</div>
+</c:if>
                                                                     <c:forEach var="transaction" items="${bankTransactions}">
                                                                         <tr>
                                                                             <td><c:out value="${transaction.transactionID}"/></td>

@@ -6,6 +6,7 @@
 <head>
     <title>View Invoices</title>
     <!-- Meta -->
+    
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=0, minimal-ui">
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -224,9 +225,8 @@
                                         <span class="pcoded-mcaret"></span>
                                     </a>
                                     <ul class="pcoded-submenu">
-                                        <li class="active"><a href="invoices.jsp">View Invoices</a></li>
-                                        <li><a href="create-invoice.jsp">Create Invoice</a></li>
-                                        <li><a href="bank-transactions.jsp">Bank Transactions</a></li>
+                                        <li class="active"><a href="${pageContext.request.contextPath}/invoices?action=list">View Invoices</a></li>
+        <li><a href="${pageContext.request.contextPath}/invoices?action=create">Create Invoice</a></li> <li><a href="${pageContext.request.contextPath}/invoices?action=listBankTransactions">Bank Transactions</a></li>
                                     </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">
@@ -317,6 +317,32 @@
                                                     <div class="card-header">
                                                         <h5>Invoice List</h5>
                                                         <div class="card-header-right">
+                                                           <!-- Search and Filter Section -->
+        <div class="input-group" style="width: 450px;">
+                <select id="filterColumn" class="form-control form-control-sm">
+                    <option value="" selected>Filter</option>
+                    <option value="0">Invoice ID</option>
+                    <option value="1">Date</option>
+                    <option value="2">Store</option>
+                    <option value="3">Employee</option>
+                    <option value="4">Customer</option>
+                    <option value="5">Total Amount</option>
+                    <option value="6">Notes</option>
+                    <option value="7">Status</option>
+                </select>
+<!--                <select id="sortOrder" class="form-control form-control-sm">
+                <option value="" selected>Sort</option>
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+                </select>-->
+                <input type="text" id="searchInput" class="form-control form-control-sm" placeholder="Tìm kiếm...">
+                <div class="input-group-append">
+                    <button class="btn btn-primary btn-sm" onclick="searchTable()">Search</button>
+                    <button class="btn btn-secondary btn-sm" onclick="resetSearch()">Reset</button>
+                </div>
+                
+            </div>
+        </div>
                                                             <a href="create-invoice.jsp" class="btn btn-primary btn-sm">Create New Invoice</a>
                                                         </div>
                                                     </div>
@@ -331,6 +357,7 @@
                                                                         <th>Employee</th>
                                                                         <th>Customer</th>
                                                                         <th>Total Amount</th>
+                                                                        <th>Notes</th>
                                                                         <th>Status</th>
                                                                         <th>Actions</th>
                                                                     </tr>
@@ -344,7 +371,9 @@
                                                                             <td><c:out value="${invoice.employeeName}"/></td>
                                                                             <td><c:out value="${invoice.customerName}"/></td>
                                                                             <td><fmt:formatNumber value="${invoice.totalAmount}" type="currency"/></td>
+                                                                            <td><c:out value="${invoice.note}"/></td>
                                                                             <td><label class="label label-<c:out value="${invoice.status == 'Pending' ? 'warning' : 'success'}"/>"><c:out value="${invoice.status}"/></label></td>
+                                                                           
                                                                             <td>
                                                                                 <button class="btn btn-sm btn-info" onclick="viewDetails(${invoice.invoiceID})">
                                                                                     <i class="fa fa-eye"></i> View Details
@@ -355,6 +384,12 @@
                                                                 </tbody>
                                                             </table>
                                                         </div>
+                                                        <!-- Pagination Section -->
+    <div class="pagination-section mt-3 text-center">
+        <button class="btn btn-primary btn-sm" onclick="previousPage()" id="prevBtn" disabled>Previous</button>
+        <span id="pageInfo" class="mx-3"></span>
+        <button class="btn btn-primary btn-sm" onclick="nextPage()" id="nextBtn">Next</button>
+    </div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -389,8 +424,50 @@
     <script type="text/javascript" src="assets/js/script.js"></script>
     <script>
         function viewDetails(invoiceID) {
-            window.location.href = 'invoice-details.jsp?invoiceID=' + invoiceID;
-        }
+    window.location.href = 'invoices?action=viewDetails&id=' + invoiceID;
+}
     </script>
+    
+    <script>
+  function searchTable() {
+    var column = document.getElementById("filterColumn").value; // Cột được chọn
+    var searchValue = document.getElementById("searchInput").value.toLowerCase(); // Giá trị tìm kiếm
+
+    var table = document.querySelector(".table tbody");
+    var rows = table.getElementsByTagName("tr");
+
+    // Nếu không chọn cột hoặc không có giá trị tìm kiếm, hiển thị tất cả hàng
+    if (!column || !searchValue) {
+        for (var i = 0; i < rows.length; i++) {
+            rows[i].style.display = ""; // Hiển thị lại tất cả hàng
+        }
+        return;
+    }
+
+    for (var i = 0; i < rows.length; i++) {
+        var cell = rows[i].getElementsByTagName("td")[column]; // Ô trong cột được chọn
+        if (cell) {
+            var cellText = cell.textContent.toLowerCase();
+            // Đặc biệt xử lý cho Total Amount (cột 5)
+            if (column == 5) {
+                cellText = cellText.replace(/[^0-9.-]+/g, ""); // Loại bỏ ký tự tiền tệ
+                var searchNum = parseFloat(searchValue);
+                var cellNum = parseFloat(cellText);
+                rows[i].style.display = (searchValue === "" || (!isNaN(searchNum) && cellNum == searchNum)) ? "" : "none";
+            } else {
+                // So sánh chuỗi cho các cột khác
+                rows[i].style.display = (searchValue === "" || cellText.indexOf(searchValue) > -1) ? "" : "none";
+            }
+        }
+    }
+}
+
+function resetSearch() {
+    document.getElementById("searchInput").value = ""; // Đặt lại ô tìm kiếm
+    document.getElementById("filterColumn").value = ""; // Đặt lại dropdown về "Filter"
+    searchTable(); // Gọi lại hàm tìm kiếm để hiển thị tất cả hàng
+}
+</script>
+
 </body>
 </html>
