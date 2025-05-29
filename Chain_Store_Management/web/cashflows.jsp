@@ -1,3 +1,5 @@
+<%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
+<%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -131,8 +133,7 @@
                                         <li><a href="products.jsp">View Products</a></li>
                                         <li><a href="add-product.jsp">Add Product</a></li>
                                         <li><a href="categories.jsp">Manage Categories</a></li>
-                                        <li><a href="sizes.jsp">Manage Sizes</a></li>
-                                        <li><a href="colors.jsp">Manage Colors</a></li>
+                                       
                                     </ul>
                                 </li>
                                 <li class="pcoded-hasmenu">
@@ -181,7 +182,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
+                                    <a href="customers.jsp" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>

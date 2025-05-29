@@ -88,81 +88,9 @@
                                                         <span class="notification-time"><fmt:formatDate value="${notification.createdAt}" pattern="dd-MM-yyyy HH:mm"/></span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </li>
-                                    </c:forEach>
-                                    <li>
-                                        <a href="notifications" class="b-b-primary text-primary">View All Notifications</a>
-                                    </li>
-                                </ul>
-                            </li>
-                            <li class="user-profile header-notification">
-                                <a href="#!" class="waves-effect waves-light">
-                                    <img src="assets/images/avatar-4.jpg" class="img-radius" alt="User-Profile-Image">
-                                    <span><c:out value="${sessionScope.user.fullName}"/></span>
-                                    <i class="ti-angle-down"></i>
-                                </a>
-                                <ul class="show-notification profile-notification">
-                                    <li><a href="user-profile.jsp"><i class="ti-user"></i> Profile</a></li>
-                                    <li><a href="settings.jsp"><i class="ti-settings"></i> Settings</a></li>
-                                    <li><a href="logout.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </nav>
-            <!-- Sidebar -->
-            <div class="pcoded-main-container">
-                <div class="pcoded-wrapper">
-                    <nav class="pcoded-navbar">
-                        <div class="sidebar_toggle"><a href="#"><i class="icon-close icons"></i></a></div>
-                        <div class="pcoded-inner-navbar main-menu">
-                            <div class="main-menu-header">
-                                <img class="img-80 img-radius" src="assets/images/avatar-4.jpg" alt="User-Profile-Image">
-                                <div class="user-details">
-                                    <span id="more-details"><c:out value="${sessionScope.user.fullName}"/> <i class="fa fa-caret-down"></i></span>
-                                </div>
-                            </div>
-                            <div class="main-menu-content">
-                                <ul>
-                                    <li class="more-details">
-                                        <a href="user-profile.jsp"><i class="ti-user"></i>View Profile</a>
-                                        <a href="settings.jsp"><i class="ti-settings"></i>Settings</a>
-                                        <a href="logout.jsp"><i class="ti-layout-sidebar-left"></i>Logout</a>
-                                    </li>
-                                </ul>
-                            </div>
-                            <div class="p-15 p-b-0">
-                                <form class="form-material">
-                                    <div class="form-group form-primary">
-                                        <input type="text" name="search" class="form-control" placeholder="Search Products, Employees..." required="">
-                                        <span class="form-bar"></span>
-                                        <label class="float-label"><i class="fa fa-search m-r-10"></i>Search</label>
-                                    </div>
-                                </form>
-                            </div>
-                            <div class="pcoded-navigation-label">Store Management</div>
-                            <ul class="pcoded-item pcoded-left-item">
-                                <li>
-                                    <a href="index.jsp" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-home"></i></span>
-                                        <span class="pcoded-mtext">Dashboard</span>
-                                    </a>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-package"></i></span>
-                                        <span class="pcoded-mtext">Products</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li><a href="products.jsp">View Products</a></li>
-                                        <li><a href="add-product.jsp">Add Product</a></li>
-                                        <li><a href="categories.jsp">Manage Categories</a></li>
-                                        <li><a href="sizes.jsp">Manage Sizes</a></li>
-                                        <li><a href="colors.jsp">Manage Colors</a></li>
-
+                                            </li>
+                                        </c:forEach>
+                                        <li><a href="notifications.jsp" class="b-b-primary text-primary">View All Notifications</a></li>
                                     </ul>
                                 </li>
                                 <li class="user-profile header-notification">
@@ -177,72 +105,6 @@
                                         <li><a href="logout.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
                                     </ul>
                                 </li>
-
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-receipt"></i></span>
-                                        <span class="pcoded-mtext">Invoices</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li><a href="invoices.jsp">View Invoices</a></li>
-                                        <li><a href="create-invoice.jsp">Create Invoice</a></li>
-                                        <li><a href="bank-transactions.jsp">Bank Transactions</a></li>
-                                    </ul>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-truck"></i></span>
-                                        <span class="pcoded-mtext">Purchases</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li><a href="purchases.jsp">View Purchases</a></li>
-                                        <li><a href="create-purchase.jsp">Create Purchase</a></li>
-                                    </ul>
-                                </li>
-                                <li class="pcoded-hasmenu">
-                                    <a href="javascript:void(0)" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-user"></i></span>
-                                        <span class="pcoded-mtext">Employees</span>
-                                        <span class="pcoded-mcaret"></span>
-                                    </a>
-                                    <ul class="pcoded-submenu">
-                                        <li><a href="employees.jsp">View Employees</a></li>
-                                        <li><a href="add-employee.jsp">Add Employee</a></li>
-                                    </ul>
-                                </li>
-                                <li>
-                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class Calendars="ti-id-badge"></i></span>
-                                        <span class="pcoded-mtext">Customers</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="cashflows.jsp" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-money"></i></span>
-                                        <span class="pcoded-mtext">Cash Flow</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="stores.jsp" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
-                                        <span class="pcoded-mtext">Stores</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="notifications.jsp" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-bell"></i></span>
-                                        <span class="pcoded-mtext">Notifications</span>
-                                    </a>
-                                </li>
-                                <li>
-                                    <a href="reports.jsp" class="waves-effect waves-dark">
-                                        <span class="pcoded-micon"><i class="ti-bar-chart"></i></span>
-                                        <span class="pcoded-mtext">Reports</span>
-                                    </a>
-                                </li>
-
                             </ul>
                         </div>
                     </div>
@@ -374,44 +236,7 @@
                                                 <div class="card-header">
                                                     <h5>Filter Inventory</h5>
                                                 </div>
-                                                <div class="card-block">
-                                                    <!--                            <form class="form-material" action="inventory" method="get">
-                                                                                    <div class="form-row">
-                                                                                        <div class="form-group col-md-4">
-                                                                                            <select name="warehouse" class="form-control">
-                                                                                                <option value="">All Warehouses</option>
-                                                    <c:forEach var="warehouse" items="${warehouses}">
-                                                        <option value="${warehouse.warehouseID}" 
-                                                        <c:if test="${param.warehouse == warehouse.warehouseID}">selected</c:if>>
-                                                        ${warehouse.warehouseName}
-                                                    </option>
-                                                    </c:forEach>
-                                                </select>
-                                                <label class="float-label">Select Warehouse</label>
-                                            </div>
-                                            <div class="form-group col-md-4">
-                                                <select name="category" class="form-control">
-                                                    <option value="">All Categories</option>
-                                                    <c:forEach var="category" items="${categories}">
-                                                        <option value="${category.categoryID}" 
-                                                        <c:if test="${param.category == category.categoryID}">selected</c:if>>
-                                                        ${category.categoryName}
-                                                    </option>
-                                                    </c:forEach>
-                                                </select>
-                                                <label class="float-label">Select Category</label>
-                                            </div>
-                                            <div class="form-group col-md-4">
-                                                <input type="text" name="productName" class="form-control" 
-                                                       placeholder="Product name..." value="${param.productName}">
-                                                <label class="float-label">Product Name</label>
-                                            </div>
-                                        </div>
-                                        <button type="submit" class="btn btn-primary">Filter</button>
-                                        <a href="inventory" class="btn btn-secondary">Reset</a>
-                                    </form>-->
-
-
+                                                <div class="card-block">         
                                                     <form class="form-material" action="inventory" method="get">
                                                         <div class="form-row">
                                                             <div class="form-group col-md-4">
@@ -449,10 +274,6 @@
                                                     </form>     
 
                                                 </div>
-
-
-
-
 
                                             </div>
 
