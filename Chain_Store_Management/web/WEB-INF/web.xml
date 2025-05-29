@@ -4,8 +4,73 @@
         <servlet-name>LoginServlet</servlet-name>
         <servlet-class>Controller.LoginServlet</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>CustomerListServlet</servlet-name>
+        <servlet-class>controller.CustomerListServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UpdateCustomerServlet</servlet-name>
+        <servlet-class>controller.UpdateCustomerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>DeleteCustomerServlet</servlet-name>
+        <servlet-class>controller.DeleteCustomerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AddCustomerServlet</servlet-name>
+        <servlet-class>controller.AddCustomerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>SearchCustomerServlet</servlet-name>
+        <servlet-class>controller.SearchCustomerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>RemoveCustomerServlet</servlet-name>
+        <servlet-class>controllerCustomer.RemoveCustomerServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>StoreListServlet</servlet-name>
+        <servlet-class>controller.StoreListServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>NotificationServlet</servlet-name>
+        <servlet-class>controller.NotificationServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>CustomerDetailsServlet</servlet-name>
+        <servlet-class>controller.CustomerDetailsServlet</servlet-class>
+    </servlet>
+
     <servlet-mapping>
         <servlet-name>LoginServlet</servlet-name>
         <url-pattern>/checkLogin</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CustomerListServlet</servlet-name>
+        <url-pattern>/CustomerListServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>CustomerDetailsServlet</servlet-name>
+        <url-pattern>/CustomerDetailsServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AddCustomerServlet</servlet-name>
+        <url-pattern>/add-customer</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>SearchCustomerServlet</servlet-name>
+        <url-pattern>/SearchCustomerServlet</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>RemoveCustomerServlet</servlet-name>
+        <url-pattern>/remove-customer</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>StoreListServlet</servlet-name>
+        <url-pattern>/stores</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>NotificationServlet</servlet-name>
+        <url-pattern>/notifications</url-pattern>
     </servlet-mapping>
 </web-app>

@@ -134,7 +134,7 @@
                                         </li>
                                     </c:forEach>
                                     <li>
-                                        <a href="notifications.jsp" class="b-b-primary text-primary">View All Notifications</a>
+                                        <a href="notifications" class="b-b-primary text-primary">View All Notifications</a>
                                     </li>
                                 </ul>
                             </li>
@@ -252,7 +252,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="customers.jsp" class="waves-effect waves-dark">
+                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class Calendars="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>

@@ -3,17 +3,19 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/Controller/RegisterServlet.java</file>
             <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/inventory.jsp</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/login.jsp</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/user-profile.jsp</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/homeManager.jsp</file>
             <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/DAO/UserDAO.java</file>
             <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/home.jsp</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/Controller/RegisterServlet.java</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/login.jsp</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/register.jsp</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/Model/Users.java</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/homeManager.jsp</file>
-            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/user-profile.jsp</file>
             <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/Controller/LoginServlet.java</file>
             <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/settings.jsp</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/Model/Users.java</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/WEB-INF/web.xml</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/web/register.jsp</file>
+            <file>file:/E:/SWP301/project_1/SWP391-Group4/Chain_Store_Management/src/java/dal/DBContext.java</file>
         </group>
     </open-files>
 </project-private>

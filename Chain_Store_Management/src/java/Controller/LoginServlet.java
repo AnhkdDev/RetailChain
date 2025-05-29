@@ -2,6 +2,7 @@ package Controller;
 
 import DAO.UserDAO;
 import Model.Users;
+import dal.DBContext;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -16,6 +17,8 @@ import jakarta.servlet.http.HttpSession;
 public class LoginServlet extends HttpServlet {
 
     private UserDAO userDAO;
+    
+   
 
     @Override
     public void init() throws ServletException {
@@ -64,7 +67,7 @@ public class LoginServlet extends HttpServlet {
     private void updateLastLogin(int userId) {
         String sql = "UPDATE Users SET last_login = ? WHERE user_id = ?";
         try {
-            java.sql.PreparedStatement ps = userDAO.connection.prepareStatement(sql);
+            java.sql.PreparedStatement ps = userDAO.getConnection().prepareStatement(sql)  ;
             ps.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
             ps.setInt(2, userId);
             ps.executeUpdate();
