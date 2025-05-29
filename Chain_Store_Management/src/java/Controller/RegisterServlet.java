@@ -78,12 +78,13 @@ public class RegisterServlet extends HttpServlet {
         String phoneNumber = request.getParameter("phoneNumber");
         String address = request.getParameter("address");
         String email = request.getParameter("email");
+        String fullname = request.getParameter("fullname");
         String pass = request.getParameter("password");
         
         // call sign up 
         
         try {
-           userDAO.signUp(username, phoneNumber, address, email, pass);
+           userDAO.signUp(username, phoneNumber, address, email,fullname , pass);
              
             if ("OK".equals(userDAO.getStatus())) {
                 request.setAttribute("mess", "Registration successful! Please login.");

@@ -149,7 +149,7 @@
                                 <ul class="show-notification profile-notification">
                                     <li><a href="user-profile.jsp"><i class="ti-user"></i> Profile</a></li>
                                     <li><a href="settings.jsp"><i class="ti-settings"></i> Settings</a></li>
-                                    <li><a href="login.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
+                                    <li><a href="home.jsp"><i class="ti-layout-sidebar-left"></i> Logout</a></li>
                                 </ul>
                             </li>
                         </ul>

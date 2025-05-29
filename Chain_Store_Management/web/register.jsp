@@ -274,6 +274,7 @@
                 <input type="text" name="phoneNumber" placeholder="Phone Number" required/>
                 <input type="text" name="address" placeholder="Address" required/>
                 <input type="email" name="email" placeholder="Email" required/>
+                <input type="text" name="fullname" placeholder="FullName" required/>
                 <input type="password" name="password" placeholder="Password" required/>
 <!--                <select name="roleID" required>
                     <option value="2">Employee</option>
@@ -284,8 +285,8 @@
             </form>
         </div>
 
-        <div class="form-container sign-in-container">
-            <form action="<%= request.getContextPath() %>/LoginServlet" method="post">
+<!--        <div class="form-container sign-in-container">
+            <form action="<%= request.getContextPath() %>/checkLogin" method="post">
                 <h1>Login</h1>
                 <div class="social-container">
                     <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
@@ -293,19 +294,19 @@
                     <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
                 </div>
                 <span>hoặc sử dụng tài khoản của bạn</span>
-                <input type="email" name="email" placeholder="Email hoặc Tên đăng nhập" required/>
+                <input type="text" name="user" placeholder="Email hoặc Tên đăng nhập" required/>
                 <input type="password" name="password" placeholder="Mật khẩu" required/>
                 <a href="#">Quên mật khẩu?</a>
                 <button type="submit">Đăng nhập</button>
             </form>
-        </div>
+        </div>-->
 
         <div class="overlay-container">
             <div class="overlay">
                 <div class="overlay-panel overlay-left">
                     <h1>Welcome Back!</h1>
                     <p>Để giữ kết nối với chúng tôi, vui lòng đăng nhập bằng thông tin cá nhân của bạn</p>
-                    <button class="ghost" id="signIn"><a href="login.jsp">Login</a></button>
+                    <button class="ghost" ><a href="login.jsp">Login</a></button>
                 </div>
                 <div class="overlay-panel overlay-right">
                     <h1>Welcome!</h1>

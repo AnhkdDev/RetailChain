@@ -67,7 +67,7 @@ public class UserDAO extends DBContext{
         return null;
     }
     
-    public void signUp(String username, String phoneNumber, String address, String email, String password) {
+    public void signUp(String username, String phoneNumber, String address, String email, String fullname, String password) {
     String sql = "INSERT INTO Users (Username, PasswordHash, Email, FullName, PhoneNumber, Address, roleID, IsActive, CreatedAt) " +
                  "VALUES (?, ?, ?, ?, ?, ?, 2, 1, GETDATE())"; // Luôn gán roleID = 2
     try {
@@ -91,7 +91,7 @@ public class UserDAO extends DBContext{
         ps.setString(1, username);
         ps.setString(2, BCrypt.hashpw(password, BCrypt.gensalt())); // Mã hóa mật khẩu
         ps.setString(3, email);
-        ps.setString(4, ""); // FullName tạm thời để trống
+        ps.setString(4, fullname); // FullName tạm thời để trống
         ps.setString(5, phoneNumber);
         ps.setString(6, address);
         

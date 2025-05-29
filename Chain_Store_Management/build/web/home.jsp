@@ -242,15 +242,15 @@
             <img src="https://img.icons8.com/ios-filled/50/ffffff/shop.png" alt="Shop Icon">
             ShopViet
         </div>
-        <div class="nav">
-            <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/shopping-bag.png" alt="Products Icon">Products</a>
-            <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/lightbulb.png" alt="Solutions Icon">Solutions</a>
-            <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/user-group.png" alt="Customers Icon">Customers</a>
-            <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/price-tag.png" alt="Service Fees Icon">Fees</a>
-            <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/headset.png" alt="Support Icon">Support</a>
-            <a href="login.jsp" class="login-btn">Login</a>
-            <a href="register.jsp" class="register-btn">Register</a>
-        </div>
+      <div class="nav">
+    <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/shopping-bag.png" alt="Products Icon">Products</a>
+    <a href="solutions.jsp"><img src="https://img.icons8.com/ios-filled/50/ffffff/folder.png" alt="Solutions Icon">Solutions</a>
+    <a href="customers.jsp"><img src="https://img.icons8.com/ios-filled/50/ffffff/users.png" alt="Customers Icon">Customers</a>
+    <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/price-tag.png" alt="Service Fees Icon">Fees</a>
+    <a href="#"><img src="https://img.icons8.com/ios-filled/50/ffffff/headset.png" alt="Support Icon">Support</a>
+    <a href="login.jsp" class="login-btn">Login</a>
+    <a href="register.jsp" class="register-btn">Register</a>
+</div>
     </div>
     <div class="main-content">
         <h1 class="title">The Most Popular Sales Management Software</h1>
@@ -263,12 +263,12 @@
             <div class="stat">10,000+ <br> businesses monthly</div>
         </div>
         <img src="https://via.placeholder.com/300" alt="Staff Image" class="image">
-        <div class="overview">
+<!--        <div class="overview">
             <div>Store Overview</div>
             <div>Today's Revenue: 5,000,000 VND</div>
             <div>New Orders: 15</div>
             <div>Customers: 120</div>
-        </div>
+        </div>-->
     </div>
     <div class="footer">
         <p>Address: 123 Main Street, Ho Chi Minh City, Vietnam</p>
