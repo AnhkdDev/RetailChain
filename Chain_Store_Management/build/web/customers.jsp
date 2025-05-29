@@ -20,28 +20,100 @@
         <link rel="stylesheet" type="text/css" href="assets/css/jquery.mCustomScrollbar.css">
         <link rel="stylesheet" type="text/css" href="assets/css/style.css">
         <style>
-            .form-group { margin-right: 15px; }
-            .btn-info { background-color: #17a2b8 !important; border-color: #17a2b8 !important; color: #fff !important; }
-            .btn-info:hover { background-color: #138496 !important; border-color: #138496 !important; }
-            .btn-primary { background-color: #007bff !important; border-color: #007bff !important; color: #fff !important; }
-            .btn-primary:hover { background-color: #0056b3 !important; border-color: #0056b3 !important; }
-            .btn-danger { background-color: #dc3545 !important; border-color: #dc3545 !important; color: #fff !important; }
-            .btn-danger:hover { background-color: #c82333 !important; border-color: #c82333 !important; }
-            .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.875rem; line-height: 1.5; border-radius: 0.2rem; }
-            .pagination { margin-top: 20px; }
-            .pagination .page-link { color: #007bff; }
-            .pagination .page-link:hover { background-color: #0056b3; color: #fff; }
-            .pagination .page-item.active .page-link { background-color: #007bff; border-color: #007bff; color: #fff; }
-            .card { overflow: auto; max-height: none !important; }
-            .full-card { cursor: pointer; }
-            .table-card.fullscreen { position: fixed !important; top: 0 !important; left: 0 !important; width: 100% !important; height: 100% !important; z-index: 1050 !important; background: #fff !important; margin: 0 !important; padding: 15px !important; overflow: auto !important; }
-            .table-card.fullscreen .card-block { max-height: 90vh !important; overflow-y: auto !important; }
-            .modal-content { border-radius: 0.3rem; }
-            .modal-header { background-color: #007bff; color: #fff; }
-            .modal-title { font-weight: 500; }
-            .modal-footer { justify-content: flex-end; }
-            .detail-label { font-weight: bold; margin-bottom: 5px; }
-            .detail-value { margin-bottom: 15px; }
+            .form-group {
+                margin-right: 15px;
+            }
+            .btn-info {
+                background-color: #17a2b8 !important;
+                border-color: #17a2b8 !important;
+                color: #fff !important;
+            }
+            .btn-info:hover {
+                background-color: #138496 !important;
+                border-color: #138496 !important;
+            }
+            .btn-primary {
+                background-color: #007bff !important;
+                border-color: #007bff !important;
+                color: #fff !important;
+            }
+            .btn-primary:hover {
+                background-color: #0056b3 !important;
+                border-color: #0056b3 !important;
+            }
+            .btn-danger {
+                background-color: #dc3545 !important;
+                border-color: #dc3545 !important;
+                color: #fff !important;
+            }
+            .btn-danger:hover {
+                background-color: #c82333 !important;
+                border-color: #c82333 !important;
+            }
+            .btn-sm {
+                padding: 0.25rem 0.5rem;
+                font-size: 0.875rem;
+                line-height: 1.5;
+                border-radius: 0.2rem;
+            }
+            .pagination {
+                margin-top: 20px;
+            }
+            .pagination .page-link {
+                color: #007bff;
+            }
+            .pagination .page-link:hover {
+                background-color: #0056b3;
+                color: #fff;
+            }
+            .pagination .page-item.active .page-link {
+                background-color: #007bff;
+                border-color: #007bff;
+                color: #fff;
+            }
+            .card {
+                overflow: auto;
+                max-height: none !important;
+            }
+            .full-card {
+                cursor: pointer;
+            }
+            .table-card.fullscreen {
+                position: fixed !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100% !important;
+                height: 100% !important;
+                z-index: 1050 !important;
+                background: #fff !important;
+                margin: 0 !important;
+                padding: 15px !important;
+                overflow: auto !important;
+            }
+            .table-card.fullscreen .card-block {
+                max-height: 90vh !important;
+                overflow-y: auto !important;
+            }
+            .modal-content {
+                border-radius: 0.3rem;
+            }
+            .modal-header {
+                background-color: #007bff;
+                color: #fff;
+            }
+            .modal-title {
+                font-weight: 500;
+            }
+            .modal-footer {
+                justify-content: flex-end;
+            }
+            .detail-label {
+                font-weight: bold;
+                margin-bottom: 5px;
+            }
+            .detail-value {
+                margin-bottom: 15px;
+            }
         </style>
     </head>
     <body>
@@ -227,13 +299,13 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="stores.jsp" class="waves-effect waves-dark">
+                                        <a href="stores" class="waves-effect waves-dark">
                                             <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
                                             <span class="pcoded-mtext">Stores</span>
                                         </a>
                                     </li>
                                     <li>
-                                        <a href="notifications.jsp" class="waves-effect waves-dark">
+                                        <a href="notifications" class="waves-effect waves-dark">
                                             <span class="pcoded-micon"><i class="ti-bell"></i></span>
                                             <span class="pcoded-mtext">Notifications</span>
                                         </a>
@@ -367,10 +439,8 @@
                                                                                             <button class="btn btn-sm btn-info waves-effect waves-light" data-toggle="modal" data-target="#customerDetailsModal" onclick="populateDetails('<c:out value="${customer.customerID}"/>', '<c:out value="${customer.fullName}"/>', '<c:out value="${customer.phone}"/>', '<c:out value="${customer.email}"/>', '<c:out value="${customer.gender}"/>', '<fmt:formatDate value="${customer.birthDate}" pattern="dd-MM-yyyy"/>', '<c:out value="${customer.address}"/>', ${customer.totalSpent}, '<fmt:formatDate value="${customer.createdAt}" pattern="dd-MM-yyyy HH:mm"/>')" title="View Details">
                                                                                                 <i class="fa fa-eye"></i>
                                                                                             </button>
-                                                                                            <button class="btn btn-sm btn-info waves-effect waves-light" data-toggle="modal" data-target="#customerModal" onclick="populateForm('<c:out value="${customer.customerID}"/>', '<c:out value="${customer.fullName}"/>', '<c:out value="${customer.phone}"/>', '<c:out value="${customer.email}"/>', '<c:out value="${customer.gender}"/>', '<fmt:formatDate value="${customer.birthDate}" pattern="yyyy-MM-dd"/>', '<c:out value="${customer.address}"/>')" title="Edit">
-                                                                                                <i class="fa fa-edit"></i>
-                                                                                            </button>
-                                                                                            
+
+
                                                                                         </td>
                                                                                     </tr>
                                                                                 </c:forEach>
@@ -551,50 +621,50 @@
             <script src="assets/js/vertical-layout.min.js"></script>
             <script type="text/javascript" src="assets/js/script.js"></script>
             <script>
-                function populateForm(id, fullName, phone, email, gender, birthDate, address) {
-                    document.getElementById('customerId').value = id;
-                    document.getElementById('fullName').value = fullName;
-                    document.getElementById('phone').value = phone;
-                    document.getElementById('email').value = email;
-                    document.getElementById('gender').value = gender;
-                    document.getElementById('birthDate').value = birthDate;
-                    document.getElementById('address').value = address;
-                    document.getElementById('customerModalLabel').textContent = 'Edit Customer';
-                    document.getElementById('passwordGroup').style.display = 'none';
-                }
-                function clearForm() {
-                    document.getElementById('customerId').value = '';
-                    document.getElementById('fullName').value = '';
-                    document.getElementById('phone').value = '';
-                    document.getElementById('email').value = '';
-                    document.getElementById('gender').value = 'Male';
-                    document.getElementById('birthDate').value = '';
-                    document.getElementById('address').value = '';
-                    document.getElementById('password').value = '';
-                    document.getElementById('customerModalLabel').textContent = 'Add Customer';
-                    document.getElementById('passwordGroup').style.display = 'block';
-                }
-                function populateDetails(id, fullName, phone, email, gender, birthDate, address, totalSpent, createdAt) {
-                    document.getElementById('detailCustomerId').textContent = id;
-                    document.getElementById('detailFullName').textContent = fullName;
-                    document.getElementById('detailPhone').textContent = phone;
-                    document.getElementById('detailEmail').textContent = email;
-                    document.getElementById('detailGender').textContent = gender;
-                    document.getElementById('detailBirthDate').textContent = birthDate;
-                    document.getElementById('detailAddress').textContent = address;
-                    document.getElementById('detailTotalSpent').textContent = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(totalSpent);
-                    document.getElementById('detailCreatedAt').textContent = createdAt;
-                }
-                document.querySelectorAll('.full-card').forEach(function (element) {
-                    element.addEventListener('click', function () {
-                        var card = this.closest('.table-card');
-                        if (card.classList.contains('fullscreen')) {
-                            card.classList.remove('fullscreen');
-                        } else {
-                            card.classList.add('fullscreen');
-                        }
-                    });
-                });
+                                                                                                function populateForm(id, fullName, phone, email, gender, birthDate, address) {
+                                                                                                    document.getElementById('customerId').value = id;
+                                                                                                    document.getElementById('fullName').value = fullName;
+                                                                                                    document.getElementById('phone').value = phone;
+                                                                                                    document.getElementById('email').value = email;
+                                                                                                    document.getElementById('gender').value = gender;
+                                                                                                    document.getElementById('birthDate').value = birthDate;
+                                                                                                    document.getElementById('address').value = address;
+                                                                                                    document.getElementById('customerModalLabel').textContent = 'Edit Customer';
+                                                                                                    document.getElementById('passwordGroup').style.display = 'none';
+                                                                                                }
+                                                                                                function clearForm() {
+                                                                                                    document.getElementById('customerId').value = '';
+                                                                                                    document.getElementById('fullName').value = '';
+                                                                                                    document.getElementById('phone').value = '';
+                                                                                                    document.getElementById('email').value = '';
+                                                                                                    document.getElementById('gender').value = 'Male';
+                                                                                                    document.getElementById('birthDate').value = '';
+                                                                                                    document.getElementById('address').value = '';
+                                                                                                    document.getElementById('password').value = '';
+                                                                                                    document.getElementById('customerModalLabel').textContent = 'Add Customer';
+                                                                                                    document.getElementById('passwordGroup').style.display = 'block';
+                                                                                                }
+                                                                                                function populateDetails(id, fullName, phone, email, gender, birthDate, address, totalSpent, createdAt) {
+                                                                                                    document.getElementById('detailCustomerId').textContent = id;
+                                                                                                    document.getElementById('detailFullName').textContent = fullName;
+                                                                                                    document.getElementById('detailPhone').textContent = phone;
+                                                                                                    document.getElementById('detailEmail').textContent = email;
+                                                                                                    document.getElementById('detailGender').textContent = gender;
+                                                                                                    document.getElementById('detailBirthDate').textContent = birthDate;
+                                                                                                    document.getElementById('detailAddress').textContent = address;
+                                                                                                    document.getElementById('detailTotalSpent').textContent = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(totalSpent);
+                                                                                                    document.getElementById('detailCreatedAt').textContent = createdAt;
+                                                                                                }
+                                                                                                document.querySelectorAll('.full-card').forEach(function (element) {
+                                                                                                    element.addEventListener('click', function () {
+                                                                                                        var card = this.closest('.table-card');
+                                                                                                        if (card.classList.contains('fullscreen')) {
+                                                                                                            card.classList.remove('fullscreen');
+                                                                                                        } else {
+                                                                                                            card.classList.add('fullscreen');
+                                                                                                        }
+                                                                                                    });
+                                                                                                });
             </script>
-        </body>
-    </html>
+    </body>
+</html>

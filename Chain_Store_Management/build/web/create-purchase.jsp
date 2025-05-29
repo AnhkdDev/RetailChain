@@ -264,13 +264,13 @@
                                     </a>
                                 </li>
 <li>
-                                    <a href="stores.jsp" class="waves-effect waves-dark">
+                                    <a href="stores" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-shopping-cart"></i></span>
                                         <span class="pcoded-mtext">Stores</span>
                                     </a>
                                 </li>
 <li>
-                                    <a href="notifications.jsp" class="waves-effect waves-dark">
+                                    <a href="notifications" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-bell"></i></span>
                                         <span class="pcoded-mtext">Notifications</span>
                                     </a>
