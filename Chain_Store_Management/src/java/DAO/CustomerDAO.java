@@ -4,6 +4,7 @@ import dal.DBContext;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import model.Customer;
@@ -21,7 +22,8 @@ public class CustomerDAO {
     public DBContext getDBContext() {
         return dbContext;
     }
-   //lay tat o cua custommer
+
+    // Get all customers
     public List<Customer> getAllCustomers() throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -37,7 +39,7 @@ public class CustomerDAO {
                 + "GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel "
                 + "ORDER BY c.CustomerID";
 
-        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql); 
+        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 Customer customer = new Customer();
@@ -57,7 +59,7 @@ public class CustomerDAO {
         return customers;
     }
 
-    // Lấy thông tin khách hàng dựa trên ID
+    // Get customer by ID
     public Customer getCustomerById(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -92,7 +94,8 @@ public class CustomerDAO {
         }
         return null;
     }
-  // Lấy danh sách hóa đơn của một khách hàng dựa trên ID
+
+    // Get invoices for a customer by ID
     public List<Invoice> getCustomerInvoices(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -124,7 +127,8 @@ public class CustomerDAO {
         }
         return invoices;
     }
-  // Tìm kiếm khách hàng với các thông tin tùy chọn
+
+    // Search customers with optional filters
     public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
@@ -143,20 +147,20 @@ public class CustomerDAO {
         List<String> conditions = new ArrayList<>();
         List<Object> parameters = new ArrayList<>();
 
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            conditions.add("(c.FullName LIKE ? OR c.Phone LIKE ? OR u.Email LIKE ?)");
-            String likeKeyword = "%" + keyword + "%";
-            parameters.add(likeKeyword);
-            parameters.add(likeKeyword);
-            parameters.add(likeKeyword);
-        }
-
+        // Apply gender filter
         if (gender != null && !gender.trim().isEmpty()) {
+            if (!List.of("Male", "Female", "Other").contains(gender)) {
+                throw new IllegalArgumentException("Invalid gender value.");
+            }
             conditions.add("c.Gender = ?");
             parameters.add(gender);
         }
 
+        // Apply membership level filter
         if (membershipLevel != null && !membershipLevel.trim().isEmpty()) {
+            if (!List.of("Bronze", "Silver", "Gold", "Platinum", "Diamond").contains(membershipLevel)) {
+                throw new IllegalArgumentException("Invalid membership level value.");
+            }
             conditions.add("lc.TierLevel = ?");
             parameters.add(membershipLevel);
         }
@@ -187,11 +191,32 @@ public class CustomerDAO {
                     customer.setAddress(rs.getString("Address"));
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
-                    customers.add(customer);
+
+                    // Apply keyword filter in Java if keyword is provided
+                    if (keyword != null && !keyword.trim().isEmpty()) {
+                        if (keyword.length() > 100) {
+                            throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+                        }
+                        String normalizedFullName = normalizeVietnamese(customer.getFullName());
+                        String normalizedEmail = normalizeVietnamese(customer.getEmail());
+                        String normalizedPhone = customer.getPhone().toLowerCase();
+                        if (normalizedFullName.contains(keyword) || normalizedPhone.contains(keyword) || normalizedEmail.contains(keyword)) {
+                            customers.add(customer);
+                        }
+                    } else {
+                        customers.add(customer);
+                    }
                 }
             }
         }
         return customers;
+    }
+
+    // Normalize Vietnamese text by removing diacritics and converting to lowercase
+    private String normalizeVietnamese(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
     }
 
     public void updateCustomer(Customer customer) throws SQLException {
@@ -273,7 +298,6 @@ public class CustomerDAO {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
-        // Soft delete by setting IsActive to 0
         String sqlCustomers = "UPDATE Customers SET IsActive = 0 WHERE CustomerID = ?";
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlCustomers)) {
             stmt.setInt(1, customerID);

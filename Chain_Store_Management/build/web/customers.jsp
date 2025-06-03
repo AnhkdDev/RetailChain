@@ -398,11 +398,7 @@
                                                                 </form>
                                                             </div>
                                                             <div class="dt-responsive table-responsive">
-                                                                <div class="m-b-20">
-                                                                    <button class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#customerModal" onclick="clearForm()">
-                                                                        <i class="fa fa-plus"></i> Add New Customer
-                                                                    </button>
-                                                                </div>
+                                                                
                                                                 <c:choose>
                                                                     <c:when test="${empty customers}">
                                                                         <p>No customers found.</p>

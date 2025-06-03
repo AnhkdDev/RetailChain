@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class StoreDAO extends DBContext {
 
@@ -28,12 +29,35 @@ public class StoreDAO extends DBContext {
         }
     }
 
+    // Kiểm tra định dạng phoneNumber (chỉ chứa số, dấu cách, dấu ngoặc, dấu gạch ngang)
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^[0-9\\s\\(\\)-]+$");
+
     public StorePage getStores(String search, String status, int page, int pageSize) {
+        // Validation
+        if (page < 1) {
+            page = 1;
+        }
+        if (pageSize < 1) {
+            pageSize = 4; // Giá trị mặc định
+        }
+        if (status != null && !status.equals("active") && !status.equals("inactive")) {
+            status = null; // Bỏ qua status không hợp lệ
+        }
+        if (search != null) {
+            search = search.trim();
+            if (search.length() > 100 || search.isEmpty()) {
+                search = null; // Giới hạn độ dài và bỏ qua nếu rỗng
+            } else {
+                // Loại bỏ ký tự nguy hiểm (dù đã dùng PreparedStatement)
+                search = search.replaceAll("[^a-zA-Z0-9\\s]", "");
+            }
+        }
+
         List<Store> stores = new ArrayList<>();
         int totalStores = 0;
 
         // Tạo câu lệnh SQL để đếm tổng số cửa hàng
-        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM Stores WHERE (storeName LIKE ? OR address LIKE ?)");
+        StringBuilder countSql = new StringBuilder("SELECT COUNT(*) FROM Stores WHERE (LOWER(storeName) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))");
         List<String> countParams = new ArrayList<>();
         countParams.add(search != null ? "%" + search + "%" : "%");
         countParams.add(search != null ? "%" + search + "%" : "%");
@@ -44,12 +68,12 @@ public class StoreDAO extends DBContext {
         }
 
         // Tạo câu lệnh SQL để lấy dữ liệu cửa hàng với phân trang
-        StringBuilder sql = new StringBuilder("SELECT * FROM Stores WHERE (storeName LIKE ? OR address LIKE ?)");
+        StringBuilder sql = new StringBuilder("SELECT * FROM Stores WHERE (LOWER(storeName) LIKE LOWER(?) OR LOWER(address) LIKE LOWER(?))");
         List<String> stringParams = new ArrayList<>(countParams);
         if (status != null && !status.isEmpty()) {
             sql.append(" AND isActive = ?");
         }
-        sql.append(" ORDER BY storeID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        sql.append(" ORDER BY isActive DESC, storeID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
 
         try {
             // Lấy tổng số cửa hàng
@@ -65,16 +89,20 @@ public class StoreDAO extends DBContext {
 
             // Lấy danh sách cửa hàng theo phân trang
             try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
+                int paramIndex = 1;
                 for (int i = 0; i < stringParams.size(); i++) {
-                    stmt.setString(i + 1, stringParams.get(i));
+                    stmt.setString(paramIndex++, stringParams.get(i));
                 }
-                stmt.setInt(stringParams.size() + 1, (page - 1) * pageSize);
-                stmt.setInt(stringParams.size() + 2, pageSize);
+                if (status != null && !status.isEmpty()) {
+                    stmt.setString(paramIndex++, status.equals("active") ? "1" : "0");
+                }
+                stmt.setInt(paramIndex++, (page - 1) * pageSize);
+                stmt.setInt(paramIndex, pageSize);
 
                 ResultSet rs = stmt.executeQuery();
                 while (rs.next()) {
                     Store store = new Store();
-                    store.setStoreID(String.valueOf(rs.getInt("storeID"))); // Chuyển INT thành String
+                    store.setStoreID(String.valueOf(rs.getInt("storeID")));
                     store.setStoreName(rs.getString("storeName"));
                     store.setAddress(rs.getString("address"));
                     store.setPhoneNumber(rs.getString("phone"));
@@ -90,7 +118,15 @@ public class StoreDAO extends DBContext {
     }
 
     public boolean toggleStoreStatus(String storeID) {
-        // Chuyển đổi storeID thành INT
+        if (storeID == null || storeID.trim().isEmpty()) {
+            return false;
+        }
+        try {
+            Integer.parseInt(storeID); // Kiểm tra storeID là số nguyên
+        } catch (NumberFormatException e) {
+            return false;
+        }
+
         String sql = "UPDATE Stores SET isActive = CASE WHEN isActive = 1 THEN 0 ELSE 1 END WHERE storeID = ?";
         try (PreparedStatement stmt = connection.prepareStatement(sql)) {
             stmt.setInt(1, Integer.parseInt(storeID));
@@ -101,43 +137,69 @@ public class StoreDAO extends DBContext {
         }
     }
 
-    // Thêm hoặc cập nhật cửa hàng
     public boolean saveStore(Store store) {
+        // Validation
+        if (store == null || store.getStoreName() == null || store.getAddress() == null || store.getPhoneNumber() == null) {
+            return false;
+        }
+        String storeName = store.getStoreName().trim();
+        String address = store.getAddress().trim();
+        String phoneNumber = store.getPhoneNumber().trim();
+        String email = store.getEmail() != null ? store.getEmail().trim() : "";
+
+        if (storeName.isEmpty() || storeName.length() > 100) {
+            return false; // Tên cửa hàng rỗng hoặc quá dài
+        }
+        if (address.isEmpty() || address.length() > 200) {
+            return false; // Địa chỉ rỗng hoặc quá dài
+        }
+        if (phoneNumber.isEmpty() || phoneNumber.length() > 20 || !PHONE_PATTERN.matcher(phoneNumber).matches()) {
+            return false; // Số điện thoại không hợp lệ
+        }
+        if (email.length() > 100) {
+            return false; // Email quá dài
+        }
+
         String sqlSelect = "SELECT COUNT(*) FROM Stores WHERE storeID = ?";
         String sqlInsert = "INSERT INTO Stores (storeName, address, phone, email, isActive) VALUES (?, ?, ?, ?, ?)";
         String sqlUpdate = "UPDATE Stores SET storeName = ?, address = ?, phone = ?, email = ?, isActive = ? WHERE storeID = ?";
-        
+
         try {
-            // Kiểm tra xem storeID có tồn tại không (cho edit)
+            // Kiểm tra xem storeID có tồn tại không
             boolean exists = false;
             if (store.getStoreID() != null && !store.getStoreID().isEmpty()) {
-                try (PreparedStatement selectStmt = connection.prepareStatement(sqlSelect)) {
-                    selectStmt.setInt(1, Integer.parseInt(store.getStoreID()));
-                    ResultSet rs = selectStmt.executeQuery();
-                    rs.next();
-                    exists = rs.getInt(1) > 0;
+                try {
+                    int storeId = Integer.parseInt(store.getStoreID());
+                    try (PreparedStatement selectStmt = connection.prepareStatement(sqlSelect)) {
+                        selectStmt.setInt(1, storeId);
+                        ResultSet rs = selectStmt.executeQuery();
+                        rs.next();
+                        exists = rs.getInt(1) > 0;
+                    }
+                } catch (NumberFormatException e) {
+                    return false; // storeID không hợp lệ
                 }
             }
 
             if (exists) {
-                // Cập nhật cửa hàng hiện có
+                // Cập nhật cửa hàng
                 try (PreparedStatement updateStmt = connection.prepareStatement(sqlUpdate)) {
-                    updateStmt.setString(1, store.getStoreName());
-                    updateStmt.setString(2, store.getAddress());
-                    updateStmt.setString(3, store.getPhoneNumber());
-                    updateStmt.setString(4, store.getEmail());
+                    updateStmt.setString(1, storeName);
+                    updateStmt.setString(2, address);
+                    updateStmt.setString(3, phoneNumber);
+                    updateStmt.setString(4, email);
                     updateStmt.setBoolean(5, store.isActive());
                     updateStmt.setInt(6, Integer.parseInt(store.getStoreID()));
                     int rowsAffected = updateStmt.executeUpdate();
                     return rowsAffected > 0;
                 }
             } else {
-                // Thêm cửa hàng mới (không bao gồm storeID)
+                // Thêm cửa hàng mới
                 try (PreparedStatement insertStmt = connection.prepareStatement(sqlInsert)) {
-                    insertStmt.setString(1, store.getStoreName());
-                    insertStmt.setString(2, store.getAddress());
-                    insertStmt.setString(3, store.getPhoneNumber());
-                    insertStmt.setString(4, store.getEmail());
+                    insertStmt.setString(1, storeName);
+                    insertStmt.setString(2, address);
+                    insertStmt.setString(3, phoneNumber);
+                    insertStmt.setString(4, email);
                     insertStmt.setBoolean(5, store.isActive());
                     int rowsAffected = insertStmt.executeUpdate();
                     return rowsAffected > 0;
@@ -145,6 +207,16 @@ public class StoreDAO extends DBContext {
             }
         } catch (SQLException e) {
             throw new RuntimeException("Lỗi khi lưu cửa hàng", e);
+        }
+    }
+
+    public void closeConnection() {
+        try {
+            if (connection != null && !connection.isClosed()) {
+                connection.close();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Lỗi khi đóng kết nối", e);
         }
     }
 
@@ -164,8 +236,12 @@ public class StoreDAO extends DBContext {
             page = storeDAO.getStores(null, "active", 1, pageSize);
             printStores(page.getStores(), page.getTotalStores(), 1, pageSize);
 
-            System.out.println("\nTrang 1 (Tìm kiếm 'North'):");
-            page = storeDAO.getStores("North", null, 1, pageSize);
+            System.out.println("\nTrang 1 (Tìm kiếm 'north'):");
+            page = storeDAO.getStores("north", null, 1, pageSize);
+            printStores(page.getStores(), page.getTotalStores(), 1, pageSize);
+
+            System.out.println("\nTrang 1 (Tìm kiếm 'NORTH'):");
+            page = storeDAO.getStores("NORTH", null, 1, pageSize);
             printStores(page.getStores(), page.getTotalStores(), 1, pageSize);
 
             System.out.println("\nKiểm tra chuyển đổi trạng thái cho storeID 1:");

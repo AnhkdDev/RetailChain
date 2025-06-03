@@ -7,8 +7,11 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Notification;
 import model.User;
 
@@ -16,13 +19,14 @@ import model.User;
 public class NotificationServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 4;
+    private static final Logger LOGGER = Logger.getLogger(NotificationServlet.class.getName());
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
 
-        System.out.println("NotificationServlet: doGet called for /notifications");
+        LOGGER.log(Level.INFO, "doGet called for /notifications");
         NotificationDAO notificationDAO = new NotificationDAO();
         List<Notification> notifications = null;
         String errorMessage = null;
@@ -34,10 +38,16 @@ public class NotificationServlet extends HttpServlet {
             if (user != null) {
                 userID = user.getUserID();
             }
-            System.out.println("NotificationServlet: UserID: " + userID);
+            LOGGER.log(Level.INFO, "UserID: {0}", userID);
 
             // Lấy tham số lọc và trang
             String search = request.getParameter("search");
+            if (search != null) {
+                if (search.length() > 100) {
+                    throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+                }
+                search = normalizeVietnamese(search);
+            }
             String status = request.getParameter("status");
             String pageStr = request.getParameter("page");
             int page = 1;
@@ -47,9 +57,10 @@ public class NotificationServlet extends HttpServlet {
                     if (page < 1) page = 1;
                 }
             } catch (NumberFormatException e) {
-                System.err.println("NotificationServlet: Invalid page format: " + pageStr);
+                LOGGER.log(Level.WARNING, "Invalid page format: {0}", pageStr);
+                page = 1;
             }
-            System.out.println("NotificationServlet: Search: " + search + ", Status: " + status + ", Page: " + page);
+            LOGGER.log(Level.INFO, "Search: {0}, Status: {1}, Page: {2}", new Object[]{search, status, page});
 
             // Lấy danh sách thông báo
             notifications = notificationDAO.getFilteredNotifications(search, status, page, PAGE_SIZE, userID);
@@ -57,40 +68,44 @@ public class NotificationServlet extends HttpServlet {
             int totalNotifications = notificationDAO.countFilteredNotifications(search, status, userID);
             int totalPages = (int) Math.ceil((double) totalNotifications / PAGE_SIZE);
 
-            System.out.println("NotificationServlet: Số thông báo lấy được: " + (notifications != null ? notifications.size() : "null"));
-            System.out.println("NotificationServlet: Tổng số thông báo: " + totalNotifications + ", Tổng số trang: " + totalPages);
+            LOGGER.log(Level.INFO, "Số thông báo lấy được: {0}, Tổng số thông báo: {1}, Tổng số trang: {2}",
+                    new Object[]{notifications.size(), totalNotifications, totalPages});
 
             // Set attributes
             request.setAttribute("notifications", notifications != null ? notifications : new ArrayList<>());
-            request.setAttribute("search", search);
+            request.setAttribute("search", request.getParameter("search")); // Preserve original input
             request.setAttribute("status", status);
             request.setAttribute("currentPage", page);
             request.setAttribute("totalNotifications", totalNotifications);
             request.setAttribute("pageSize", PAGE_SIZE);
             request.setAttribute("totalPages", totalPages);
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Invalid input: {0}", e.getMessage());
+            errorMessage = e.getMessage();
+            request.setAttribute("notifications", new ArrayList<>());
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
         } catch (Exception e) {
-            System.err.println("NotificationServlet: Lỗi: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Lỗi: {0}", e.getMessage());
             errorMessage = "Lỗi khi lấy danh sách thông báo: " + e.getMessage();
         } finally {
             notificationDAO.closeConnection();
-            System.out.println("NotificationServlet: Database connection closed");
+            LOGGER.log(Level.INFO, "Database connection closed");
         }
 
         if (errorMessage != null) {
             request.setAttribute("message", errorMessage);
             request.setAttribute("messageType", "danger");
         }
-        System.out.println("NotificationServlet: Set attributes");
+        LOGGER.log(Level.INFO, "Forwarding to notifications.jsp");
         request.getRequestDispatcher("/notifications.jsp").forward(request, response);
-        System.out.println("NotificationServlet: Forwarded to notifications.jsp");
     }
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        System.out.println("NotificationServlet: doPost called");
+        LOGGER.log(Level.INFO, "doPost called");
 
         NotificationDAO notificationDAO = new NotificationDAO();
         try {
@@ -100,83 +115,94 @@ public class NotificationServlet extends HttpServlet {
             if (user != null) {
                 userID = user.getUserID();
             }
-            System.out.println("NotificationServlet: UserID: " + userID);
+            LOGGER.log(Level.INFO, "UserID: {0}", userID);
 
             // Lấy tham số lọc
             String search = request.getParameter("search");
+            if (search != null) {
+                if (search.length() > 100) {
+                    throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+                }
+                search = normalizeVietnamese(search);
+            }
             String status = request.getParameter("status");
 
             String action = request.getParameter("action");
-            System.out.println("NotificationServlet: Action received: " + action);
+            LOGGER.log(Level.INFO, "Action received: {0}", action);
 
             if ("delete".equals(action)) {
                 String notificationIDStr = request.getParameter("notificationID");
-                System.out.println("NotificationServlet: Delete request for notificationID: " + notificationIDStr);
-                try {
-                    int notificationID = Integer.parseInt(notificationIDStr);
-                    boolean deleted = notificationDAO.deleteNotification(notificationID);
-                    if (deleted) {
-                        request.setAttribute("message", "Thông báo đã được xóa thành công.");
-                        request.setAttribute("messageType", "success");
-                    } else {
-                        request.setAttribute("message", "Không tìm thấy thông báo để xóa.");
-                        request.setAttribute("messageType", "danger");
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("NotificationServlet: Invalid notificationID format: " + notificationIDStr);
-                    request.setAttribute("message", "ID thông báo không hợp lệ.");
+                LOGGER.log(Level.INFO, "Delete request for notificationID: {0}", notificationIDStr);
+                if (notificationIDStr == null || notificationIDStr.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Notification ID is required.");
+                }
+                int notificationID = Integer.parseInt(notificationIDStr);
+                boolean deleted = notificationDAO.deleteNotification(notificationID);
+                if (deleted) {
+                    request.setAttribute("message", "Thông báo đã được xóa thành công.");
+                    request.setAttribute("messageType", "success");
+                } else {
+                    request.setAttribute("message", "Không tìm thấy thông báo để xóa.");
                     request.setAttribute("messageType", "danger");
                 }
             } else if ("markRead".equals(action)) {
                 String notificationIDStr = request.getParameter("notificationID");
-                System.out.println("NotificationServlet: Mark as read request for notificationID: " + notificationIDStr);
-                try {
-                    int notificationID = Integer.parseInt(notificationIDStr);
-                    boolean marked = notificationDAO.markNotificationAsRead(notificationID);
-                    if (marked) {
-                        request.setAttribute("message", "Thông báo đã được đánh dấu là đã đọc.");
-                        request.setAttribute("messageType", "success");
-                    } else {
-                        request.setAttribute("message", "Không tìm thấy thông báo để đánh dấu.");
-                        request.setAttribute("messageType", "danger");
-                    }
-                } catch (NumberFormatException e) {
-                    System.err.println("NotificationServlet: Invalid notificationID format: " + notificationIDStr);
-                    request.setAttribute("message", "ID thông báo không hợp lệ.");
+                LOGGER.log(Level.INFO, "Mark as read request for notificationID: {0}", notificationIDStr);
+                if (notificationIDStr == null || notificationIDStr.trim().isEmpty()) {
+                    throw new IllegalArgumentException("Notification ID is required.");
+                }
+                int notificationID = Integer.parseInt(notificationIDStr);
+                boolean marked = notificationDAO.markNotificationAsRead(notificationID);
+                if (marked) {
+                    request.setAttribute("message", "Thông báo đã được đánh dấu là đã đọc.");
+                    request.setAttribute("messageType", "success");
+                } else {
+                    request.setAttribute("message", "Không tìm thấy thông báo để đánh dấu.");
                     request.setAttribute("messageType", "danger");
                 }
             } else {
-                System.out.println("NotificationServlet: Unknown action: " + action);
-                request.setAttribute("message", "Hành động không được hỗ trợ.");
-                request.setAttribute("messageType", "danger");
+                LOGGER.log(Level.WARNING, "Unknown action: {0}", action);
+                throw new IllegalArgumentException("Hành động không được hỗ trợ.");
             }
 
-            // Lấy lại danh sách thông báo với bộ lọc hiện tại
+            // Lấy lại danh sách thông báo
             List<Notification> notifications = notificationDAO.getFilteredNotifications(search, status, 1, PAGE_SIZE, userID);
-            System.out.println("NotificationServlet: Số thông báo lấy được sau hành động: " + (notifications != null ? notifications.size() : "null"));
-            request.setAttribute("notifications", notifications != null ? notifications : new ArrayList<>());
-
-            // Set các attributes khác
             int totalNotifications = notificationDAO.countFilteredNotifications(search, status, userID);
             int totalPages = (int) Math.ceil((double) totalNotifications / PAGE_SIZE);
-            request.setAttribute("search", search);
+
+            // Set attributes
+            request.setAttribute("notifications", notifications != null ? notifications : new ArrayList<>());
+            request.setAttribute("search", request.getParameter("search"));
             request.setAttribute("status", status);
             request.setAttribute("currentPage", 1);
             request.setAttribute("totalNotifications", totalNotifications);
             request.setAttribute("pageSize", PAGE_SIZE);
             request.setAttribute("totalPages", totalPages);
+        } catch (IllegalArgumentException e) {
+            LOGGER.log(Level.WARNING, "Invalid input: {0}", e.getMessage());
+            request.setAttribute("message", e.getMessage());
+            request.setAttribute("messageType", "danger");
+            request.setAttribute("notifications", new ArrayList<>());
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
         } catch (Exception e) {
-            System.err.println("NotificationServlet: Lỗi trong doPost: " + e.getMessage());
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Lỗi trong doPost: {0}", e.getMessage());
             request.setAttribute("message", "Lỗi khi xử lý hành động: " + e.getMessage());
             request.setAttribute("messageType", "danger");
         } finally {
             notificationDAO.closeConnection();
-            System.out.println("NotificationServlet: Database connection closed");
+            LOGGER.log(Level.INFO, "Database connection closed");
         }
 
-        System.out.println("NotificationServlet: Forwarding to notifications.jsp after POST");
+        LOGGER.log(Level.INFO, "Forwarding to notifications.jsp after POST");
         request.getRequestDispatcher("/notifications.jsp").forward(request, response);
+    }
+
+    // Normalize Vietnamese text by removing diacritics and converting to lowercase
+    private String normalizeVietnamese(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
     }
 
     @Override
