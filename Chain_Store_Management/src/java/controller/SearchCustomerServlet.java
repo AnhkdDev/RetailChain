@@ -23,6 +23,51 @@ public class SearchCustomerServlet extends HttpServlet {
     private static final int RECORDS_PER_PAGE = 5;
     private static final Logger LOGGER = Logger.getLogger(SearchCustomerServlet.class.getName());
 
+    // Hàm tách và lọc từ khóa
+    private String cleanSearchKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+
+        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
+        String normalizedKeyword = normalizeVietnamese(keyword);
+        // Tách từ dựa trên khoảng trắng
+        String[] words = normalizedKeyword.trim().split("\\s+");
+        List<String> cleanedWords = new ArrayList<>();
+
+        for (String word : words) {
+            // Kiểm tra từ hợp lệ
+            if (isValidWord(word)) {
+                cleanedWords.add(word);
+            }
+        }
+
+        // Gộp các từ hợp lệ thành một chuỗi
+        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+    }
+
+    // Kiểm tra từ hợp lệ
+    private boolean isValidWord(String word) {
+        if (word == null || word.length() < 2) {
+            return false;
+        }
+
+        // Loại bỏ chuỗi ký tự lặp (như "ccccccccc")
+        if (word.matches("^(.)\\1+$")) {
+            return false;
+        }
+
+        // Chỉ cho phép chữ cái, số, và ký tự email cơ bản
+        return word.matches("[a-z0-9@.]+");
+    }
+
+    // Normalize Vietnamese text
+    private String normalizeVietnamese(String text) {
+        if (text == null) return null;
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+    }
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
@@ -34,12 +79,13 @@ public class SearchCustomerServlet extends HttpServlet {
         try {
             // Validate and sanitize search input
             String search = request.getParameter("search");
+            String cleanedSearch = null;
             if (search != null) {
                 if (search.length() > 100) {
                     throw new IllegalArgumentException("Search term exceeds 100 characters.");
                 }
-                // Normalize Vietnamese diacritics and convert to lowercase
-                search = normalizeVietnamese(search).toLowerCase();
+                // Làm sạch từ khóa
+                cleanedSearch = cleanSearchKeyword(search);
             }
             String gender = request.getParameter("gender");
             String membershipLevel = request.getParameter("membershipLevel");
@@ -48,6 +94,7 @@ public class SearchCustomerServlet extends HttpServlet {
             // Reset filters if requested
             if ("true".equals(reset)) {
                 search = null;
+                cleanedSearch = null;
                 gender = null;
                 membershipLevel = null;
             }
@@ -71,12 +118,12 @@ public class SearchCustomerServlet extends HttpServlet {
 
             // Fetch customers
             List<Customer> allCustomers;
-            if ((search == null || search.trim().isEmpty()) &&
+            if ((cleanedSearch == null || cleanedSearch.trim().isEmpty()) &&
                 (gender == null || gender.trim().isEmpty()) &&
                 (membershipLevel == null || membershipLevel.trim().isEmpty())) {
                 allCustomers = customerDAO.getAllCustomers();
             } else {
-                allCustomers = customerDAO.searchCustomers(search, gender, membershipLevel);
+                allCustomers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel);
             }
 
             // Handle pagination
@@ -192,7 +239,7 @@ public class SearchCustomerServlet extends HttpServlet {
                     throw new IllegalArgumentException("Address is required and must be 1-255 characters.");
                 }
 
-                customer.setFullName(normalizeVietnamese(fullName)); // Normalize for consistency
+                customer.setFullName(normalizeVietnamese(fullName));
                 customer.setPhone(phone);
                 customer.setEmail(email.toLowerCase());
                 customer.setGender(gender);
@@ -231,13 +278,6 @@ public class SearchCustomerServlet extends HttpServlet {
         }
 
         processRequest(request, response);
-    }
-
-    // Normalize Vietnamese text by removing diacritics and converting to lowercase
-    private String normalizeVietnamese(String text) {
-        if (text == null) return null;
-        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "").toLowerCase();
     }
 
     @Override

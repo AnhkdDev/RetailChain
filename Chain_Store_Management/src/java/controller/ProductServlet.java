@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,6 +18,51 @@ public class ProductServlet extends HttpServlet {
 
     private static final int PAGE_SIZE = 5;
     private static final int MAX_SEARCH_LENGTH = 100;
+
+    // Hàm tách và lọc từ khóa
+    private String cleanSearchKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+
+        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
+        String normalizedKeyword = normalizeVietnamese(keyword);
+        // Tách từ dựa trên khoảng trắng
+        String[] words = normalizedKeyword.trim().split("\\s+");
+        List<String> cleanedWords = new ArrayList<>();
+
+        for (String word : words) {
+            // Kiểm tra từ hợp lệ
+            if (isValidWord(word)) {
+                cleanedWords.add(word);
+            }
+        }
+
+        // Gộp các từ hợp lệ thành một chuỗi
+        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+    }
+
+    // Kiểm tra từ hợp lệ
+    private boolean isValidWord(String word) {
+        if (word == null || word.length() < 2) {
+            return false;
+        }
+
+        // tach ky tu 
+        if (word.matches("^(.)\\1+$")) {
+            return false;
+        }
+
+     
+        return word.matches("[a-z0-9]+");
+    }
+
+    // Normalize Vietnamese text
+    private String normalizeVietnamese(String text) {
+        if (text == null) return null;
+        String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+    }
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
@@ -29,6 +75,7 @@ public class ProductServlet extends HttpServlet {
         List<Category> categories = null;
         List<String> errors = new ArrayList<>();
         String search = null;
+        String cleanedSearch = null;
         Integer categoryID = null;
         Boolean isActive = null;
         int currentPage = 1;
@@ -52,6 +99,12 @@ public class ProductServlet extends HttpServlet {
                     search = search.replaceAll("[<>\"&'%]", ""); // Loại bỏ ký tự nguy hiểm
                     if (search.isEmpty()) {
                         search = null;
+                    } else {
+                        cleanedSearch = cleanSearchKeyword(search);
+                        if (cleanedSearch == null || cleanedSearch.isEmpty()) {
+                            cleanedSearch = null;
+                            search = null; // Không có từ khóa hợp lệ
+                        }
                     }
                 }
             }
@@ -99,20 +152,20 @@ public class ProductServlet extends HttpServlet {
             categories = productDAO.getCategories();
 
             // Lấy danh sách sản phẩm
-            products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
-            totalProducts = productDAO.getTotalProductCount(search, categoryID, isActive);
+            products = productDAO.getProductsByPage(cleanedSearch, categoryID, isActive, currentPage, PAGE_SIZE);
+            totalProducts = productDAO.getTotalProductCount(cleanedSearch, categoryID, isActive);
             totalPages = (int) Math.ceil((double) totalProducts / PAGE_SIZE);
 
             // Điều chỉnh nếu trang vượt quá giới hạn
             if (currentPage > totalPages && totalPages > 0) {
                 currentPage = totalPages;
-                products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
+                products = productDAO.getProductsByPage(cleanedSearch, categoryID, isActive, currentPage, PAGE_SIZE);
             }
 
             // Đặt attributes cho JSP
             request.setAttribute("products", products != null ? products : new ArrayList<>());
             request.setAttribute("categories", categories);
-            request.setAttribute("search", search);
+            request.setAttribute("search", searchParam); // Giữ nguyên input gốc
             request.setAttribute("categoryID", categoryID);
             request.setAttribute("isActive", isActive);
             request.setAttribute("currentPage", currentPage);

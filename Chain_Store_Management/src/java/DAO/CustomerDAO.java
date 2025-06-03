@@ -22,7 +22,12 @@ public class CustomerDAO {
     public DBContext getDBContext() {
         return dbContext;
     }
+    
+    
+    
 
+    
+    
     // Get all customers
     public List<Customer> getAllCustomers() throws SQLException {
         if (dbContext.getConnection() == null) {

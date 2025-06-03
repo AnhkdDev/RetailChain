@@ -21,6 +21,51 @@ public class NotificationServlet extends HttpServlet {
     private static final int PAGE_SIZE = 4;
     private static final Logger LOGGER = Logger.getLogger(NotificationServlet.class.getName());
 
+    // Hàm tách và lọc từ khóa
+    private String cleanSearchKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+
+        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
+        String normalizedKeyword = normalizeVietnamese(keyword);
+        // Tách từ dựa trên khoảng trắng
+        String[] words = normalizedKeyword.trim().split("\\s+");
+        List<String> cleanedWords = new ArrayList<>();
+
+        for (String word : words) {
+            // Kiểm tra từ hợp lệ
+            if (isValidWord(word)) {
+                cleanedWords.add(word);
+            }
+        }
+
+        // Gộp các từ hợp lệ thành một chuỗi
+        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+    }
+
+    // Kiểm tra từ hợp lệ
+    private boolean isValidWord(String word) {
+        if (word == null || word.length() < 2) {
+            return false;
+        }
+
+        // Loại bỏ chuỗi ký tự lặp (như "ccccccccc")
+        if (word.matches("^(.)\\1+$")) {
+            return false;
+        }
+
+        // Chỉ cho phép chữ cái, số, và ký tự cơ bản
+        return word.matches("[a-z0-9]+");
+    }
+
+    // Normalize Vietnamese text
+    private String normalizeVietnamese(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+    }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -42,11 +87,12 @@ public class NotificationServlet extends HttpServlet {
 
             // Lấy tham số lọc và trang
             String search = request.getParameter("search");
+            String cleanedSearch = null;
             if (search != null) {
                 if (search.length() > 100) {
                     throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
                 }
-                search = normalizeVietnamese(search);
+                cleanedSearch = cleanSearchKeyword(search);
             }
             String status = request.getParameter("status");
             String pageStr = request.getParameter("page");
@@ -60,12 +106,13 @@ public class NotificationServlet extends HttpServlet {
                 LOGGER.log(Level.WARNING, "Invalid page format: {0}", pageStr);
                 page = 1;
             }
-            LOGGER.log(Level.INFO, "Search: {0}, Status: {1}, Page: {2}", new Object[]{search, status, page});
+            LOGGER.log(Level.INFO, "Search: {0}, Cleaned Search: {1}, Status: {2}, Page: {3}",
+                    new Object[]{search, cleanedSearch, status, page});
 
             // Lấy danh sách thông báo
-            notifications = notificationDAO.getFilteredNotifications(search, status, page, PAGE_SIZE, userID);
+            notifications = notificationDAO.getFilteredNotifications(cleanedSearch, status, page, PAGE_SIZE, userID);
             // Đếm tổng số thông báo
-            int totalNotifications = notificationDAO.countFilteredNotifications(search, status, userID);
+            int totalNotifications = notificationDAO.countFilteredNotifications(cleanedSearch, status, userID);
             int totalPages = (int) Math.ceil((double) totalNotifications / PAGE_SIZE);
 
             LOGGER.log(Level.INFO, "Số thông báo lấy được: {0}, Tổng số thông báo: {1}, Tổng số trang: {2}",
@@ -119,11 +166,12 @@ public class NotificationServlet extends HttpServlet {
 
             // Lấy tham số lọc
             String search = request.getParameter("search");
+            String cleanedSearch = null;
             if (search != null) {
                 if (search.length() > 100) {
                     throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
                 }
-                search = normalizeVietnamese(search);
+                cleanedSearch = cleanSearchKeyword(search);
             }
             String status = request.getParameter("status");
 
@@ -166,8 +214,8 @@ public class NotificationServlet extends HttpServlet {
             }
 
             // Lấy lại danh sách thông báo
-            List<Notification> notifications = notificationDAO.getFilteredNotifications(search, status, 1, PAGE_SIZE, userID);
-            int totalNotifications = notificationDAO.countFilteredNotifications(search, status, userID);
+            List<Notification> notifications = notificationDAO.getFilteredNotifications(cleanedSearch, status, 1, PAGE_SIZE, userID);
+            int totalNotifications = notificationDAO.countFilteredNotifications(cleanedSearch, status, userID);
             int totalPages = (int) Math.ceil((double) totalNotifications / PAGE_SIZE);
 
             // Set attributes
@@ -196,13 +244,6 @@ public class NotificationServlet extends HttpServlet {
 
         LOGGER.log(Level.INFO, "Forwarding to notifications.jsp after POST");
         request.getRequestDispatcher("/notifications.jsp").forward(request, response);
-    }
-
-    // Normalize Vietnamese text by removing diacritics and converting to lowercase
-    private String normalizeVietnamese(String text) {
-        if (text == null) return "";
-        String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "").toLowerCase();
     }
 
     @Override

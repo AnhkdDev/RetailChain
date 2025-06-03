@@ -4,6 +4,7 @@ import DAO.StoreDAO;
 import DAO.StoreDAO.StorePage;
 import model.Store;
 import java.io.IOException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import jakarta.servlet.ServletException;
@@ -25,10 +26,56 @@ public class StoreListServlet extends HttpServlet {
         storeDAO = new StoreDAO();
     }
 
+    // Hàm tách và lọc từ khóa
+    private String cleanSearchKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return null;
+        }
+
+        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
+        String normalizedKeyword = normalizeVietnamese(keyword);
+        // Tách từ dựa trên khoảng trắng
+        String[] words = normalizedKeyword.trim().split("\\s+");
+        List<String> cleanedWords = new ArrayList<>();
+
+        for (String word : words) {
+            // Kiểm tra từ hợp lệ
+            if (isValidWord(word)) {
+                cleanedWords.add(word);
+            }
+        }
+
+        // Gộp các từ hợp lệ thành một chuỗi
+        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+    }
+
+    // Kiểm tra từ hợp lệ
+    private boolean isValidWord(String word) {
+        if (word == null || word.length() < 2) {
+            return false;
+        }
+
+        // Loại bỏ chuỗi ký tự lặp (như "ccccccccc")
+        if (word.matches("^(.)\\1+$")) {
+            return false;
+        }
+
+        // Chỉ cho phép chữ cái, số
+        return word.matches("[a-z0-9]+");
+    }
+
+    // Normalize Vietnamese text
+    private String normalizeVietnamese(String text) {
+        if (text == null) return null;
+        String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+    }
+
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String action = request.getParameter("action");
         String search = request.getParameter("search");
+        String cleanedSearch = null;
         String status = request.getParameter("status");
         String reset = request.getParameter("reset");
         int page = 1;
@@ -47,6 +94,12 @@ public class StoreListServlet extends HttpServlet {
                 search = search.replaceAll("[^a-zA-Z0-9\\s]", "");
                 if (search.isEmpty()) {
                     search = null;
+                } else {
+                    cleanedSearch = cleanSearchKeyword(search);
+                    if (cleanedSearch == null || cleanedSearch.isEmpty()) {
+                        cleanedSearch = null;
+                        search = null; // Không có từ khóa hợp lệ
+                    }
                 }
             }
         }
@@ -59,6 +112,7 @@ public class StoreListServlet extends HttpServlet {
         // Xử lý reset
         if (reset != null && reset.equals("true")) {
             search = null;
+            cleanedSearch = null;
             status = null;
         }
 
@@ -153,19 +207,19 @@ public class StoreListServlet extends HttpServlet {
         }
 
         // Lấy danh sách cửa hàng
-        StorePage storePage = storeDAO.getStores(search, status, page, PAGE_SIZE);
+        StorePage storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
         List<Store> stores = storePage.getStores();
         int totalStores = storePage.getTotalStores();
         int totalPages = (int) Math.ceil((double) totalStores / PAGE_SIZE);
         if (page > totalPages && totalPages > 0) {
             page = totalPages;
-            storePage = storeDAO.getStores(search, status, page, PAGE_SIZE);
+            storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
             stores = storePage.getStores();
         }
 
         // Gửi dữ liệu đến JSP
         request.setAttribute("stores", stores);
-        request.setAttribute("search", search);
+        request.setAttribute("search", request.getParameter("search")); // Giữ nguyên input gốc
         request.setAttribute("status", status);
         request.setAttribute("currentPage", page);
         request.setAttribute("totalPages", totalPages);
