@@ -51,7 +51,7 @@
                     <c:if test="${not empty customer}">
                         <div class="card">
                             <div class="card-block">
-                                <div class="row">
+<!--                                <div class="row">
                                     <div class="col-md-6">
                                         <p><strong>Customer ID:</strong> <c:out value="${customer.customerID}"/></p>
                                         <p><strong>Full Name:</strong> <c:out value="${customer.fullName}"/></p>
@@ -64,7 +64,7 @@
                                         <p><strong>Membership Level:</strong> <c:out value="${customer.membershipLevel}"/></p>
                                         <p><strong>Address:</strong> <c:out value="${customer.address}"/></p>
                                     </div>
-                                </div>
+                                </div>-->
                             </div>
                         </div>
                         <div class="card">
@@ -129,7 +129,7 @@
 
             // Redirect to CustomerListServlet when closing the modal
             $('#customerDetailsModal').on('hidden.bs.modal', function () {
-                window.location.href = 'CustomerListServlet'; // Redirect to CustomerListServlet
+                window.location.href = 'SearchCustomerServlet'; // Redirect to CustomerListServlet
             });
         });
     </script>

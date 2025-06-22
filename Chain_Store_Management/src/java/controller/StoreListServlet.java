@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -20,51 +22,34 @@ public class StoreListServlet extends HttpServlet {
     private static final int PAGE_SIZE = 4;
     private static final int MAX_SEARCH_LENGTH = 100;
     private static final String PHONE_PATTERN = "^[0-9\\s\\(\\)-]+$";
+    private static final Logger LOGGER = Logger.getLogger(StoreListServlet.class.getName());
 
     @Override
     public void init() throws ServletException {
         storeDAO = new StoreDAO();
     }
 
-    // Hàm tách và lọc từ khóa
     private String cleanSearchKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return null;
         }
-
-        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
         String normalizedKeyword = normalizeVietnamese(keyword);
-        // Tách từ dựa trên khoảng trắng
-        String[] words = normalizedKeyword.trim().split("\\s+");
-        List<String> cleanedWords = new ArrayList<>();
-
-        for (String word : words) {
-            // Kiểm tra từ hợp lệ
-            if (isValidWord(word)) {
-                cleanedWords.add(word);
-            }
+        if (normalizedKeyword.length() > MAX_SEARCH_LENGTH) {
+            return null;
         }
-
-        // Gộp các từ hợp lệ thành một chuỗi
-        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+        return normalizedKeyword.trim();
     }
 
-    // Kiểm tra từ hợp lệ
     private boolean isValidWord(String word) {
-        if (word == null || word.length() < 2) {
+        if (word == null || word.length() < 1) {
             return false;
         }
-
-        // Loại bỏ chuỗi ký tự lặp (như "ccccccccc")
         if (word.matches("^(.)\\1+$")) {
             return false;
         }
-
-        // Chỉ cho phép chữ cái, số
-        return word.matches("[a-z0-9]+");
+        return true;
     }
 
-    // Normalize Vietnamese text
     private String normalizeVietnamese(String text) {
         if (text == null) return null;
         String normalized = Normalizer.normalize(text.trim(), Normalizer.Form.NFD);
@@ -73,6 +58,11 @@ public class StoreListServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        response.setContentType("text/html;charset=UTF-8");
+        response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        response.setHeader("Pragma", "no-cache");
+        response.setDateHeader("Expires", 0);
+
         String action = request.getParameter("action");
         String search = request.getParameter("search");
         String cleanedSearch = null;
@@ -81,7 +71,6 @@ public class StoreListServlet extends HttpServlet {
         int page = 1;
         List<String> errors = new ArrayList<>();
 
-        // Validation cho search
         if (search != null) {
             search = search.trim();
             if (search.isEmpty()) {
@@ -90,33 +79,24 @@ public class StoreListServlet extends HttpServlet {
                 errors.add("Search term must not exceed " + MAX_SEARCH_LENGTH + " characters.");
                 search = null;
             } else {
-                // Loại bỏ ký tự không hợp lệ
-                search = search.replaceAll("[^a-zA-Z0-9\\s]", "");
-                if (search.isEmpty()) {
+                cleanedSearch = cleanSearchKeyword(search);
+                if (cleanedSearch == null || cleanedSearch.isEmpty()) {
+                    cleanedSearch = null;
                     search = null;
-                } else {
-                    cleanedSearch = cleanSearchKeyword(search);
-                    if (cleanedSearch == null || cleanedSearch.isEmpty()) {
-                        cleanedSearch = null;
-                        search = null; // Không có từ khóa hợp lệ
-                    }
                 }
             }
         }
 
-        // Validation cho status
         if (status != null && !status.equals("active") && !status.equals("inactive")) {
             status = null;
         }
 
-        // Xử lý reset
         if (reset != null && reset.equals("true")) {
             search = null;
             cleanedSearch = null;
             status = null;
         }
 
-        // Validation và xử lý toggle
         if (action != null && action.equals("toggle")) {
             String storeID = request.getParameter("storeID");
             if (storeID == null || storeID.trim().isEmpty()) {
@@ -138,7 +118,6 @@ public class StoreListServlet extends HttpServlet {
             }
         }
 
-        // Validation và xử lý save
         if (action != null && action.equals("save")) {
             Store store = new Store();
             String storeID = request.getParameter("storeID");
@@ -147,7 +126,6 @@ public class StoreListServlet extends HttpServlet {
             String phoneNumber = request.getParameter("phoneNumber");
             String isActiveStr = request.getParameter("isActive");
 
-            // Validation
             if (storeID != null && !storeID.trim().isEmpty()) {
                 try {
                     Integer.parseInt(storeID);
@@ -177,24 +155,31 @@ public class StoreListServlet extends HttpServlet {
                 store.setStoreName(storeName);
                 store.setAddress(address);
                 store.setPhoneNumber(phoneNumber);
-                store.setEmail(""); // Email không có trong form
+                store.setEmail("");
                 store.setActive(isActive);
                 boolean saved = storeDAO.saveStore(store);
-                String redirectUrl = "stores?page=1";
-                if (search != null) redirectUrl += "&search=" + java.net.URLEncoder.encode(search, "UTF-8");
-                if (status != null) redirectUrl += "&status=" + status;
-                request.setAttribute("message", saved ? "Store saved successfully." : "Failed to save store.");
-                request.setAttribute("messageType", saved ? "success" : "danger");
-                response.sendRedirect(redirectUrl);
-                return;
+                if (!saved) {
+                    errors.add("Phone number already exists.");
+                    request.setAttribute("store", new Store(storeName, address, phoneNumber, "", isActive));
+                    request.setAttribute("storeID", storeID);
+                    request.setAttribute("errors", errors);
+                    request.setAttribute("message", "Please correct the errors below.");
+                    request.setAttribute("messageType", "danger");
+                } else {
+                    String redirectUrl = "stores?page=1";
+                    if (search != null) redirectUrl += "&search=" + java.net.URLEncoder.encode(search, "UTF-8");
+                    if (status != null) redirectUrl += "&status=" + status;
+                    request.setAttribute("message", "Store saved successfully.");
+                    request.setAttribute("messageType", "success");
+                    response.sendRedirect(redirectUrl);
+                    return;
+                }
             } else {
-                // Lưu giá trị đã nhập để hiển thị lại trong form
                 request.setAttribute("store", new Store(storeName, address, phoneNumber, "", isActive));
                 request.setAttribute("storeID", storeID);
             }
         }
 
-        // Validation cho page
         try {
             String pageParam = request.getParameter("page");
             if (pageParam != null && !pageParam.isEmpty()) {
@@ -206,30 +191,40 @@ public class StoreListServlet extends HttpServlet {
             page = 1;
         }
 
-        // Lấy danh sách cửa hàng
-        StorePage storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
-        List<Store> stores = storePage.getStores();
-        int totalStores = storePage.getTotalStores();
-        int totalPages = (int) Math.ceil((double) totalStores / PAGE_SIZE);
-        if (page > totalPages && totalPages > 0) {
-            page = totalPages;
-            storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
-            stores = storePage.getStores();
-        }
+        try {
+            LOGGER.info("Fetching stores with search: " + cleanedSearch + ", status: " + status + ", page: " + page);
+            StorePage storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
+            List<Store> stores = storePage.getStores();
+            int totalStores = storePage.getTotalStores();
+            int totalPages = (int) Math.ceil((double) totalStores / PAGE_SIZE);
+            if (page > totalPages && totalPages > 0) {
+                page = totalPages;
+                storePage = storeDAO.getStores(cleanedSearch, status, page, PAGE_SIZE);
+                stores = storePage.getStores();
+            }
 
-        // Gửi dữ liệu đến JSP
-        request.setAttribute("stores", stores);
-        request.setAttribute("search", request.getParameter("search")); // Giữ nguyên input gốc
-        request.setAttribute("status", status);
-        request.setAttribute("currentPage", page);
-        request.setAttribute("totalPages", totalPages);
-        if (!errors.isEmpty()) {
-            request.setAttribute("errors", errors);
-            request.setAttribute("message", "Please correct the errors below.");
+            request.setAttribute("stores", stores);
+            request.setAttribute("search", search != null ? search : "");
+            request.setAttribute("status", status != null ? status : "");
+            request.setAttribute("currentPage", page);
+            request.setAttribute("totalPages", totalPages);
+            request.setAttribute("baseUrl", "stores");
+            if (!errors.isEmpty()) {
+                request.setAttribute("errors", errors);
+                request.setAttribute("message", "Please correct the errors below.");
+                request.setAttribute("messageType", "danger");
+            }
+
+            request.getRequestDispatcher("stores.jsp").forward(request, response);
+        } catch (Exception e) {
+            LOGGER.log(Level.SEVERE, "Error processing store request", e);
+            request.setAttribute("message", "Error loading stores: " + e.getMessage());
             request.setAttribute("messageType", "danger");
+            request.setAttribute("stores", new ArrayList<>());
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
+            request.getRequestDispatcher("stores.jsp").forward(request, response);
         }
-
-        request.getRequestDispatcher("stores.jsp").forward(request, response);
     }
 
     @Override

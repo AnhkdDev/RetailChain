@@ -1,73 +1,64 @@
 package DAO;
 
 import dal.DBContext;
-import model.Product;
-import model.Category;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import jakarta.servlet.http.Part;
+import model.*;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.sql.*;
+import java.util.*;
+import java.util.logging.*;
 import java.math.BigDecimal;
+import java.text.Normalizer;
+import java.util.stream.Collectors;
 
 public class ProductDAO extends DBContext {
 
-    // Fetch products for a specific page with search and filter
-    public List<Product> getProductsByPage(String search, Integer categoryID, Boolean isActive, int page, int pageSize) throws SQLException {
-        // Validation
+    private static final Logger LOGGER = Logger.getLogger(ProductDAO.class.getName());
+    private static final String UPLOAD_DIR = "C:/Uploads/products/";
+
+    //loc +phan trang
+        public List<Product> getProductsByPage(String search, Integer categoryID, Boolean isActive, int page, int pageSize) throws SQLException {
         if (page < 1) page = 1;
         if (pageSize < 1) pageSize = 5;
+
+        String normalizedSearch = null;
         if (search != null) {
             search = search.trim();
-            if (search.isEmpty() || search.length() > 100) {
-                search = null;
-            } else {
-                search = search.replaceAll("[<>\"&'%]", ""); // Loại bỏ ký tự nguy hiểm
+            if (search.isEmpty() || search.length() > 100) search = null;
+            else {
+                search = search.replaceAll("[<>\"&'%]", "");
+                normalizedSearch = removeAccent(search).toLowerCase();
             }
         }
-        if (categoryID != null && categoryID <= 0) {
-            categoryID = null;
-        }
+        if (categoryID != null && categoryID <= 0) categoryID = null;
 
         List<Product> products = new ArrayList<>();
         int offset = (page - 1) * pageSize;
         StringBuilder sql = new StringBuilder(
-            "SELECT p.ProductID, p.ProductName, p.CategoryID, c.CategoryName, " +
-            "p.Size, p.Color, p.Price, p.CostPrice, p.Unit, p.Description, " +
-            "p.Images, p.IsActive, p.ReleaseDate " +
-            "FROM Products p " +
-            "INNER JOIN Categories c ON p.CategoryID = c.CategoryID " +
-            "WHERE 1=1"
+                "SELECT p.ProductID, p.ProductName, p.CategoryID, c.CategoryName, p.SizeID, p.ColorID, p.SellingPrice, p.CostPrice, p.Description, " +
+                "p.Images, p.IsActive, p.ReleaseDate, p.Barcode, p.ProductCode, p.StockQuantity " +
+                "FROM Products p " +
+                "INNER JOIN Categories c ON p.CategoryID = c.CategoryID " +
+                "WHERE 1=1"
         );
         List<Object> params = new ArrayList<>();
 
-        // Thêm điều kiện tìm kiếm (hỗ trợ tiếng Việt)
-        if (search != null) {
-            sql.append(" AND (p.ProductName LIKE N'%' + ? + '%' OR p.Description LIKE N'%' + ? + '%')");
-            params.add(search);
-            params.add(search);
-        }
-
-        // Thêm điều kiện lọc theo danh mục
         if (categoryID != null) {
             sql.append(" AND p.CategoryID = ?");
             params.add(categoryID);
         }
-
-        // Thêm điều kiện lọc theo trạng thái
         if (isActive != null) {
             sql.append(" AND p.IsActive = ?");
             params.add(isActive ? 1 : 0);
         }
-
         sql.append(" ORDER BY p.IsActive DESC, p.ProductID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add(offset);
         params.add(pageSize);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                stmt.setObject(i + 1, params.get(i));
-            }
+            for (int i = 0; i < params.size(); i++) stmt.setObject(i + 1, params.get(i));
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Product product = new Product();
@@ -75,105 +66,365 @@ public class ProductDAO extends DBContext {
                     product.setProductName(rs.getString("ProductName"));
                     product.setCategoryID(rs.getInt("CategoryID"));
                     product.setCategoryName(rs.getString("CategoryName"));
-                    product.setSize(rs.getString("Size"));
-                    product.setColor(rs.getString("Color"));
-                    product.setPrice(rs.getBigDecimal("Price"));
+                    product.setSizeID(rs.getObject("SizeID") != null ? rs.getInt("SizeID") : null);
+                    product.setColorID(rs.getObject("ColorID") != null ? rs.getInt("ColorID") : null);
+                    product.setSellingPrice(rs.getBigDecimal("SellingPrice"));
                     product.setCostPrice(rs.getBigDecimal("CostPrice"));
-                    product.setUnit(rs.getString("Unit"));
                     product.setDescription(rs.getString("Description"));
                     product.setImages(rs.getString("Images"));
                     product.setIsActive(rs.getBoolean("IsActive"));
                     product.setReleaseDate(rs.getDate("ReleaseDate"));
+                    product.setBarcode(rs.getString("Barcode"));
+                    product.setProductCode(rs.getString("ProductCode"));
+                    product.setStockQuantity(rs.getInt("StockQuantity"));
                     products.add(product);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("ProductDAO: Lỗi khi lấy sản phẩm: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error fetching products: {0}", e.getMessage());
             throw e;
+        }
+
+        if (normalizedSearch != null) {
+            final String finalSearch = normalizedSearch;
+            products = products.stream()
+                    .filter(p -> {
+                        String name = p.getProductName() != null ? removeAccent(p.getProductName()).toLowerCase() : "";
+                        String desc = p.getDescription() != null ? removeAccent(p.getDescription()).toLowerCase() : "";
+                        return name.contains(finalSearch) || desc.contains(finalSearch);
+                    })
+                    .collect(Collectors.toList());
         }
         return products;
     }
 
-    // Get total number of products with filters
     public int getTotalProductCount(String search, Integer categoryID, Boolean isActive) throws SQLException {
+        String normalizedSearch = null;
+        if (search != null) {
+            search = search.trim();
+            if (search.isEmpty() || search.length() > 100) search = null;
+            else {
+                search = search.replaceAll("[<>\"&'%]", "");
+                normalizedSearch = removeAccent(search).toLowerCase();
+            }
+        }
+        if (categoryID != null && categoryID <= 0) categoryID = null;
+
+        List<Product> products = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-            "SELECT COUNT(*) FROM Products p " +
-            "INNER JOIN Categories c ON p.CategoryID = c.CategoryID " +
-            "WHERE 1=1"
+                "SELECT p.ProductID, p.ProductName, p.Description " +
+                "FROM Products p " +
+                "INNER JOIN Categories c ON p.CategoryID = c.CategoryID " +
+                "WHERE 1=1"
         );
         List<Object> params = new ArrayList<>();
 
-        // Validation và tìm kiếm
-        if (search != null) {
-            search = search.trim();
-            if (search.isEmpty() || search.length() > 100) {
-                search = null;
-            } else {
-                search = search.replaceAll("[<>\"&'%]", "");
-                if (!search.isEmpty()) {
-                    sql.append(" AND (p.ProductName LIKE N'%' + ? + '%' OR p.Description LIKE N'%' + ? + '%')");
-                    params.add(search);
-                    params.add(search);
-                }
-            }
-        }
-
-        // Thêm điều kiện lọc theo danh mục
-        if (categoryID != null && categoryID > 0) {
+        if (categoryID != null) {
             sql.append(" AND p.CategoryID = ?");
             params.add(categoryID);
         }
-
-        // Thêm điều kiện lọc theo trạng thái
         if (isActive != null) {
             sql.append(" AND p.IsActive = ?");
             params.add(isActive ? 1 : 0);
         }
 
         try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
-            for (int i = 0; i < params.size(); i++) {
-                stmt.setObject(i + 1, params.get(i));
-            }
+            for (int i = 0; i < params.size(); i++) stmt.setObject(i + 1, params.get(i));
             try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getInt(1);
+                while (rs.next()) {
+                    Product product = new Product();
+                    product.setProductID(rs.getInt("ProductID"));
+                    product.setProductName(rs.getString("ProductName"));
+                    product.setDescription(rs.getString("Description"));
+                    products.add(product);
                 }
             }
         } catch (SQLException e) {
-            System.err.println("ProductDAO: Lỗi khi đếm sản phẩm: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error counting products: {0}", e.getMessage());
             throw e;
         }
-        return 0;
+
+        if (normalizedSearch != null) {
+            final String finalSearch = normalizedSearch;
+            products = products.stream()
+                    .filter(p -> {
+                        String name = p.getProductName() != null ? removeAccent(p.getProductName()).toLowerCase() : "";
+                        String desc = p.getDescription() != null ? removeAccent(p.getDescription()).toLowerCase() : "";
+                        return name.contains(finalSearch) || desc.contains(finalSearch);
+                    })
+                    .collect(Collectors.toList());
+        }
+        return products.size();
     }
 
-    // Lấy danh sách danh mục để lọc
     public List<Category> getCategories() throws SQLException {
         List<Category> categories = new ArrayList<>();
-        String sql = "SELECT CategoryID, CategoryName FROM Categories WHERE IsActive = 1 ORDER BY CategoryName";
-
-        try (PreparedStatement stmt = connection.prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
+        String sql = "SELECT CategoryID, CategoryName, TypeID FROM Categories WHERE IsActive = 1 ORDER BY CategoryName";
+        try (PreparedStatement stmt = connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 Category category = new Category();
                 category.setCategoryID(rs.getInt("CategoryID"));
                 category.setCategoryName(rs.getString("CategoryName"));
+                category.setTypeID(rs.getInt("TypeID"));
                 categories.add(category);
             }
         } catch (SQLException e) {
-            System.err.println("ProductDAO: Lỗi khi lấy danh mục: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error fetching categories: {0}", e.getMessage());
             throw e;
         }
         return categories;
     }
 
-    // Đóng kết nối
+    public List<Size> getSizes() throws SQLException {
+        List<Size> sizes = new ArrayList<>();
+        String sql = "SELECT SizeID, SizeValue, IsActive FROM Sizes WHERE IsActive = 1 ORDER BY SizeValue";
+        try (PreparedStatement stmt = connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Size size = new Size();
+                size.setSizeID(rs.getInt("SizeID"));
+                size.setSizeValue(rs.getString("SizeValue"));
+                size.setIsActive(rs.getBoolean("IsActive"));
+                sizes.add(size);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching sizes: {0}", e.getMessage());
+            throw e;
+        }
+        LOGGER.info("Fetched " + sizes.size() + " sizes");
+        return sizes;
+    }
+
+    public List<Color> getColors() throws SQLException {
+        List<Color> colors = new ArrayList<>();
+        String sql = "SELECT ColorID, ColorValue, IsActive FROM Colors WHERE IsActive = 1 ORDER BY ColorValue";
+        try (PreparedStatement stmt = connection.prepareStatement(sql); ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Color color = new Color();
+                color.setColorID(rs.getInt("ColorID"));
+                color.setColorValue(rs.getString("ColorValue"));
+                color.setIsActive(rs.getBoolean("IsActive"));
+                colors.add(color);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching colors: {0}", e.getMessage());
+            throw e;
+        }
+        LOGGER.info("Fetched " + colors.size() + " colors");
+        return colors;
+    }
+
+    public int addProduct(String productName, String description, BigDecimal sellingPrice,
+            int categoryID, Integer sizeID, Integer colorID, String unit, int stockQuantity,
+            String barcode, String productCode, List<Part> images) throws SQLException, IOException {
+        java.nio.file.Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+            LOGGER.info("Created upload directory: " + UPLOAD_DIR);
+        }
+
+        String sql = "INSERT INTO Products (ProductName, CategoryID, SizeID, ColorID, SellingPrice, Description, Images, IsActive, ReleaseDate, Barcode, ProductCode, StockQuantity, Unit) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, 1, GETDATE(), ?, ?, ?, ?)";
+        StringBuilder imagePaths = new StringBuilder();
+
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                Part filePart = images.get(i);
+                if (filePart != null && filePart.getSize() > 0) {
+                    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String baseName = productName.length() > 10 ? productName.substring(0, 10) : productName;
+                    String uploadPathStr = UPLOAD_DIR + baseName + "_" + System.currentTimeMillis() + "_" + fileName;
+                    try {
+                        filePart.write(uploadPathStr);
+                        if (imagePaths.length() > 0) imagePaths.append(";");
+                        imagePaths.append(uploadPathStr.substring(0, Math.min(uploadPathStr.length(), 200)));
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, "Error saving file: " + uploadPathStr, e);
+                        throw e;
+                    }
+                }
+            }
+        }
+
+        try (PreparedStatement stmt = connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS)) {
+            stmt.setString(1, productName);
+            stmt.setInt(2, categoryID);
+            stmt.setObject(3, sizeID);
+            stmt.setObject(4, colorID);
+            stmt.setBigDecimal(5, sellingPrice);
+            stmt.setString(6, description);
+            stmt.setString(7, imagePaths.toString());
+            stmt.setString(8, barcode);
+            stmt.setString(9, productCode);
+            stmt.setInt(10, stockQuantity);
+            stmt.setString(11, unit);
+
+            int rowsAffected = stmt.executeUpdate();
+            if (rowsAffected > 0) {
+                try (ResultSet generatedKeys = stmt.getGeneratedKeys()) {
+                    if (generatedKeys.next()) {
+                        LOGGER.info("Added new product: ID=" + generatedKeys.getInt(1));
+                        return generatedKeys.getInt(1);
+                    }
+                }
+            }
+            return -1;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error adding product: {0}", e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean updateProduct(int productId, String productName, String description, BigDecimal sellingPrice,
+            int categoryID, Integer sizeID, Integer colorID, String unit, int stockQuantity,
+            String barcode, String productCode, List<Part> images) throws SQLException, IOException {
+        java.nio.file.Path uploadPath = Paths.get(UPLOAD_DIR);
+        if (!Files.exists(uploadPath)) {
+            Files.createDirectories(uploadPath);
+            LOGGER.info("Created upload directory: " + UPLOAD_DIR);
+        }
+
+        StringBuilder imagePaths = new StringBuilder();
+        if (images != null && !images.isEmpty()) {
+            for (int i = 0; i < images.size(); i++) {
+                Part filePart = images.get(i);
+                if (filePart != null && filePart.getSize() > 0) {
+                    String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
+                    String baseName = productName.length() > 10 ? productName.substring(0, 10) : productName;
+                    String uploadPathStr = UPLOAD_DIR + baseName + "_" + System.currentTimeMillis() + "_" + fileName;
+                    try {
+                        filePart.write(uploadPathStr);
+                        if (imagePaths.length() > 0) imagePaths.append(";");
+                        imagePaths.append(uploadPathStr.substring(0, Math.min(uploadPathStr.length(), 200)));
+                    } catch (IOException e) {
+                        LOGGER.log(Level.SEVERE, "Error saving file: " + uploadPathStr, e);
+                        throw e;
+                    }
+                }
+            }
+        }
+
+        String sql = "UPDATE Products SET ProductName = ?, CategoryID = ?, SizeID = ?, ColorID = ?, SellingPrice = ?, Description = ?, " +
+                "Images = ?, Barcode = ?, ProductCode = ?, StockQuantity = ?, Unit = ? WHERE ProductID = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setString(1, productName);
+            stmt.setInt(2, categoryID);
+            stmt.setObject(3, sizeID);
+            stmt.setObject(4, colorID);
+            stmt.setBigDecimal(5, sellingPrice);
+            stmt.setString(6, description);
+            stmt.setString(7, imagePaths.length() > 0 ? imagePaths.toString() : (selectImagesById(productId) != null ? selectImagesById(productId) : ""));
+            stmt.setString(8, barcode);
+            stmt.setString(9, productCode);
+            stmt.setInt(10, stockQuantity);
+            stmt.setString(11, unit);
+            stmt.setInt(12, productId);
+
+            int rowsAffected = stmt.executeUpdate();
+            LOGGER.info("Updated product: ID=" + productId + ", RowsAffected=" + rowsAffected);
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error updating product: {0}", e.getMessage());
+            throw e;
+        }
+    }
+
+    
+    //view Product
+    
+    public Product getProductById(int productId) throws SQLException {
+        String sql = "SELECT p.ProductID, p.ProductName, p.CategoryID, c.CategoryName, p.SizeID, p.ColorID, p.SellingPrice, p.CostPrice, p.Description, " +
+                "p.Images, p.IsActive, p.ReleaseDate, p.Barcode, p.ProductCode, p.StockQuantity, p.Unit " +
+                "FROM Products p INNER JOIN Categories c ON p.CategoryID = c.CategoryID WHERE p.ProductID = ?";
+        Product product = null;
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    product = new Product();
+                    product.setProductID(rs.getInt("ProductID"));
+                    product.setProductName(rs.getString("ProductName"));
+                    product.setCategoryID(rs.getInt("CategoryID"));
+                    product.setCategoryName(rs.getString("CategoryName"));
+                    product.setSizeID(rs.getObject("SizeID") != null ? rs.getInt("SizeID") : null);
+                    product.setColorID(rs.getObject("ColorID") != null ? rs.getInt("ColorID") : null);
+                    product.setSellingPrice(rs.getBigDecimal("SellingPrice"));
+                    product.setCostPrice(rs.getBigDecimal("CostPrice"));
+                    product.setDescription(rs.getString("Description"));
+                    product.setImages(rs.getString("Images"));
+                    product.setIsActive(rs.getBoolean("IsActive"));
+                    product.setReleaseDate(rs.getDate("ReleaseDate"));
+                    product.setBarcode(rs.getString("Barcode"));
+                    product.setProductCode(rs.getString("ProductCode"));
+                    product.setStockQuantity(rs.getInt("StockQuantity"));
+                    product.setUnit(rs.getString("Unit"));
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching product by ID: {0}", e.getMessage());
+            throw e;
+        }
+        return product;
+    }
+
+    public boolean toggleProductStatus(int productID, boolean isActive) throws SQLException {
+        if (productID <= 0) {
+            LOGGER.warning("Invalid productID: " + productID);
+            return false;
+        }
+
+        String sqlCheck = "SELECT COUNT(*) FROM Products WHERE ProductID = ?";
+        try (PreparedStatement checkStmt = connection.prepareStatement(sqlCheck)) {
+            checkStmt.setInt(1, productID);
+            try (ResultSet rs = checkStmt.executeQuery()) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    LOGGER.warning("Product not found: " + productID);
+                    return false;
+                }
+            }
+        }
+
+        String sql = "UPDATE Products SET IsActive = ? WHERE ProductID = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setBoolean(1, isActive);
+            stmt.setInt(2, productID);
+            int rowsAffected = stmt.executeUpdate();
+            LOGGER.info("Toggled product status: ProductID=" + productID + ", IsActive=" + isActive + ", RowsAffected=" + rowsAffected);
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error toggling product status: {0}", e.getMessage());
+            throw e;
+        }
+    }
+
+    private String selectImagesById(int productId) throws SQLException {
+        String sql = "SELECT Images FROM Products WHERE ProductID = ?";
+        try (PreparedStatement stmt = connection.prepareStatement(sql)) {
+            stmt.setInt(1, productId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("Images");
+                }
+            }
+        }
+        return null;
+    }
+
+    public static String removeAccent(String input) {
+        if (input == null) return null;
+        String normalized = Normalizer.normalize(input, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .replaceAll("đ", "d")
+                .replaceAll("Đ", "D");
+    }
+
     public void closeConnection() {
         try {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
+                LOGGER.info("Database connection closed");
             }
         } catch (SQLException e) {
-            System.err.println("ProductDAO: Lỗi khi đóng kết nối: " + e.getMessage());
+            LOGGER.log(Level.SEVERE, "Error closing connection: {0}", e.getMessage());
         }
     }
 }

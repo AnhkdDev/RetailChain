@@ -20,48 +20,34 @@ import model.Customer;
 @WebServlet(name = "SearchCustomerServlet", urlPatterns = {"/SearchCustomerServlet"})
 public class SearchCustomerServlet extends HttpServlet {
 
-    private static final int RECORDS_PER_PAGE = 5;
+    private static final int RECORDS_PER_PAGE = 4;
     private static final Logger LOGGER = Logger.getLogger(SearchCustomerServlet.class.getName());
 
-    // Hàm tách và lọc từ khóa
     private String cleanSearchKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
             return null;
         }
-
-        // Chuẩn hóa: loại bỏ dấu, chuyển thành chữ thường
         String normalizedKeyword = normalizeVietnamese(keyword);
-        // Tách từ dựa trên khoảng trắng
         String[] words = normalizedKeyword.trim().split("\\s+");
         List<String> cleanedWords = new ArrayList<>();
-
         for (String word : words) {
-            // Kiểm tra từ hợp lệ
             if (isValidWord(word)) {
                 cleanedWords.add(word);
             }
         }
-
-        // Gộp các từ hợp lệ thành một chuỗi
         return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
     }
 
-    // Kiểm tra từ hợp lệ
     private boolean isValidWord(String word) {
         if (word == null || word.length() < 2) {
             return false;
         }
-
-        // Loại bỏ chuỗi ký tự lặp (như "ccccccccc")
         if (word.matches("^(.)\\1+$")) {
             return false;
         }
-
-        // Chỉ cho phép chữ cái, số, và ký tự email cơ bản
         return word.matches("[a-z0-9@.]+");
     }
 
-    // Normalize Vietnamese text
     private String normalizeVietnamese(String text) {
         if (text == null) return null;
         String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
@@ -77,21 +63,18 @@ public class SearchCustomerServlet extends HttpServlet {
 
         CustomerDAO customerDAO = new CustomerDAO();
         try {
-            // Validate and sanitize search input
             String search = request.getParameter("search");
             String cleanedSearch = null;
             if (search != null) {
                 if (search.length() > 100) {
                     throw new IllegalArgumentException("Search term exceeds 100 characters.");
                 }
-                // Làm sạch từ khóa
                 cleanedSearch = cleanSearchKeyword(search);
             }
             String gender = request.getParameter("gender");
             String membershipLevel = request.getParameter("membershipLevel");
             String reset = request.getParameter("reset");
 
-            // Reset filters if requested
             if ("true".equals(reset)) {
                 search = null;
                 cleanedSearch = null;
@@ -99,7 +82,6 @@ public class SearchCustomerServlet extends HttpServlet {
                 membershipLevel = null;
             }
 
-            // Validate page parameter
             int currentPage = 1;
             String pageParam = request.getParameter("page");
             if (pageParam != null) {
@@ -114,42 +96,26 @@ public class SearchCustomerServlet extends HttpServlet {
                 }
             }
 
-            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
-
-            // Fetch customers
-            List<Customer> allCustomers;
-            if ((cleanedSearch == null || cleanedSearch.trim().isEmpty()) &&
-                (gender == null || gender.trim().isEmpty()) &&
-                (membershipLevel == null || membershipLevel.trim().isEmpty())) {
-                allCustomers = customerDAO.getAllCustomers();
-            } else {
-                allCustomers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel);
-            }
-
-            // Handle pagination
-            int totalRecords = allCustomers.size();
+            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, currentPage, RECORDS_PER_PAGE);
+            int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
             int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-            if (currentPage > totalPages && totalPages > 0) {
-                currentPage = totalPages;
-                offset = (currentPage - 1) * RECORDS_PER_PAGE;
-            }
-            int fromIndex = Math.min(offset, totalRecords);
-            int toIndex = Math.min(offset + RECORDS_PER_PAGE, totalRecords);
-            List<Customer> paginatedCustomers = (totalRecords > 0) ? allCustomers.subList(fromIndex, toIndex) : new ArrayList<>();
 
-            // Set request attributes
-            request.setAttribute("customers", paginatedCustomers);
+            request.setAttribute("customers", customers);
             request.setAttribute("currentPage", currentPage);
             request.setAttribute("totalPages", totalPages);
-            request.setAttribute("search", request.getParameter("search")); // Preserve original input
-            request.setAttribute("gender", gender);
-            request.setAttribute("membershipLevel", membershipLevel);
+            request.setAttribute("search", search != null ? search : "");
+            request.setAttribute("gender", gender != null ? gender : "");
+            request.setAttribute("membershipLevel", membershipLevel != null ? membershipLevel : "");
+            request.setAttribute("baseUrl", "SearchCustomerServlet");
 
             request.getRequestDispatcher("customers.jsp").forward(request, response);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error while loading customers", e);
             request.setAttribute("message", "Error loading customers: " + e.getMessage());
             request.setAttribute("messageType", "danger");
+            request.setAttribute("customers", new ArrayList<>());
+            request.setAttribute("currentPage", 1);
+            request.setAttribute("totalPages", 1);
             request.getRequestDispatcher("customers.jsp").forward(request, response);
         } catch (IllegalArgumentException e) {
             LOGGER.log(Level.WARNING, "Invalid input: {0}", e.getMessage());
@@ -219,7 +185,6 @@ public class SearchCustomerServlet extends HttpServlet {
                 String birthDate = request.getParameter("birthDate");
                 String address = request.getParameter("address");
 
-                // Input validation
                 if (fullName == null || fullName.trim().isEmpty() || fullName.length() > 100) {
                     throw new IllegalArgumentException("Full name is required and must be 1-100 characters.");
                 }
@@ -239,13 +204,14 @@ public class SearchCustomerServlet extends HttpServlet {
                     throw new IllegalArgumentException("Address is required and must be 1-255 characters.");
                 }
 
-                customer.setFullName(normalizeVietnamese(fullName));
+                customer.setFullName(fullName);
                 customer.setPhone(phone);
                 customer.setEmail(email.toLowerCase());
                 customer.setGender(gender);
                 customer.setBirthDate(Date.valueOf(birthDate));
-                customer.setAddress(normalizeVietnamese(address));
+                customer.setAddress(address);
                 customer.setCreatedAt(new Timestamp(System.currentTimeMillis()));
+                customer.setTotalSpent(0.0);
 
                 if (customerId != null && !customerId.trim().isEmpty()) {
                     customer.setCustomerID(Integer.parseInt(customerId));
@@ -282,6 +248,6 @@ public class SearchCustomerServlet extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Servlet to search and manage customers in the Shop database.";
+        return "Servlet to manage customers with search, pagination, and CRUD operations in the Shop database.";
     }
 }

@@ -9,17 +9,42 @@ public class Product {
     private String productName;
     private int categoryID;
     private String categoryName;
-    private String size;
-    private String color;
-    private BigDecimal price;
+    private Integer sizeID; // Thay size bằng SizeID, nullable
+    private Integer colorID; // Thay color bằng ColorID, nullable
+    private BigDecimal sellingPrice;
     private BigDecimal costPrice;
     private String unit;
     private String description;
     private String images;
-    private boolean isActive; // Field for isActive
+    private boolean isActive;
     private Date releaseDate;
+    private String barcode;
+    private String productCode;
+    private int stockQuantity;
 
-    // Getters and Setters
+    // Default constructor
+    public Product() {
+    }
+
+    // Constructor matching the parameters used in UpdateProductServlet
+   public Product(String productName, int categoryID, Integer sizeID, Integer colorID, BigDecimal sellingPrice,
+               String description, String images, boolean isActive, String barcode, String productCode,
+               int stockQuantity, String unit) {
+    this.productName = productName;
+    this.categoryID = categoryID;
+    this.sizeID = sizeID;
+    this.colorID = colorID;
+    this.sellingPrice = sellingPrice;
+    this.description = description;
+    this.images = images;
+    this.isActive = isActive;
+    this.barcode = barcode;
+    this.productCode = productCode;
+    this.stockQuantity = stockQuantity;
+    this.unit = unit;
+}
+
+    // Getters and setters
     public int getProductID() {
         return productID;
     }
@@ -52,28 +77,28 @@ public class Product {
         this.categoryName = categoryName;
     }
 
-    public String getSize() {
-        return size;
+    public Integer getSizeID() {
+        return sizeID;
     }
 
-    public void setSize(String size) {
-        this.size = size;
+    public void setSizeID(Integer sizeID) {
+        this.sizeID = sizeID;
     }
 
-    public String getColor() {
-        return color;
+    public Integer getColorID() {
+        return colorID;
     }
 
-    public void setColor(String color) {
-        this.color = color;
+    public void setColorID(Integer colorID) {
+        this.colorID = colorID;
     }
 
-    public BigDecimal getPrice() {
-        return price;
+    public BigDecimal getSellingPrice() {
+        return sellingPrice;
     }
 
-    public void setPrice(BigDecimal price) {
-        this.price = price;
+    public void setSellingPrice(BigDecimal sellingPrice) {
+        this.sellingPrice = sellingPrice;
     }
 
     public BigDecimal getCostPrice() {
@@ -108,7 +133,6 @@ public class Product {
         this.images = images;
     }
 
-    // Ensure the getter is present
     public boolean getIsActive() {
         return isActive;
     }
@@ -123,5 +147,29 @@ public class Product {
 
     public void setReleaseDate(Date releaseDate) {
         this.releaseDate = releaseDate;
+    }
+
+    public String getBarcode() {
+        return barcode;
+    }
+
+    public void setBarcode(String barcode) {
+        this.barcode = barcode;
+    }
+
+    public String getProductCode() {
+        return productCode;
+    }
+
+    public void setProductCode(String productCode) {
+        this.productCode = productCode;
+    }
+
+    public int getStockQuantity() {
+        return stockQuantity;
+    }
+
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
 }

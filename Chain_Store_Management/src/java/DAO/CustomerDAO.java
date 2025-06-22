@@ -7,6 +7,7 @@ import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import model.Customer;
 import model.Invoice;
 import org.mindrot.jbcrypt.BCrypt;
@@ -23,45 +24,9 @@ public class CustomerDAO {
         return dbContext;
     }
     
-    
-    
-
-    
-    
-    // Get all customers
+    // Get all customers (with pagination support)
     public List<Customer> getAllCustomers() throws SQLException {
-        if (dbContext.getConnection() == null) {
-            throw new SQLException("Database connection is not established.");
-        }
-        List<Customer> customers = new ArrayList<>();
-        String sql = "SELECT c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, "
-                + "COALESCE(SUM(i.TotalAmount), 0) AS TotalSpent, lc.TierLevel AS MembershipLevel "
-                + "FROM Customers c "
-                + "INNER JOIN Users u ON c.UserID = u.UserID "
-                + "LEFT JOIN Invoices i ON c.CustomerID = i.CustomerID "
-                + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
-                + "WHERE c.IsActive = 1 "
-                + "GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel "
-                + "ORDER BY c.CustomerID";
-
-        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql);
-             ResultSet rs = stmt.executeQuery()) {
-            while (rs.next()) {
-                Customer customer = new Customer();
-                customer.setCustomerID(rs.getInt("CustomerID"));
-                customer.setFullName(rs.getString("FullName"));
-                customer.setPhone(rs.getString("Phone"));
-                customer.setEmail(rs.getString("Email"));
-                customer.setGender(rs.getString("Gender"));
-                customer.setBirthDate(rs.getDate("BirthDate"));
-                customer.setCreatedAt(rs.getTimestamp("CreatedAt"));
-                customer.setAddress(rs.getString("Address"));
-                customer.setTotalSpent(rs.getDouble("TotalSpent"));
-                customer.setMembershipLevel(rs.getString("MembershipLevel"));
-                customers.add(customer);
-            }
-        }
-        return customers;
+        return searchCustomers(null, null, null, 1, Integer.MAX_VALUE);
     }
 
     // Get customer by ID
@@ -133,12 +98,16 @@ public class CustomerDAO {
         return invoices;
     }
 
-    // Search customers with optional filters
-    public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel) throws SQLException {
+    // Search customers with optional filters and pagination
+    public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel, int page, int pageSize) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
+        if (page < 1) page = 1;
+        if (pageSize < 1) pageSize = 5;
+
         List<Customer> customers = new ArrayList<>();
+        int offset = (page - 1) * pageSize;
         StringBuilder sql = new StringBuilder(
                 "SELECT c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, "
                 + "COALESCE(SUM(i.TotalAmount), 0) AS TotalSpent, lc.TierLevel AS MembershipLevel "
@@ -148,17 +117,15 @@ public class CustomerDAO {
                 + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
                 + "WHERE c.IsActive = 1 "
         );
-
-        List<String> conditions = new ArrayList<>();
-        List<Object> parameters = new ArrayList<>();
+        List<Object> params = new ArrayList<>();
 
         // Apply gender filter
         if (gender != null && !gender.trim().isEmpty()) {
             if (!List.of("Male", "Female", "Other").contains(gender)) {
                 throw new IllegalArgumentException("Invalid gender value.");
             }
-            conditions.add("c.Gender = ?");
-            parameters.add(gender);
+            sql.append(" AND c.Gender = ?");
+            params.add(gender);
         }
 
         // Apply membership level filter
@@ -166,23 +133,19 @@ public class CustomerDAO {
             if (!List.of("Bronze", "Silver", "Gold", "Platinum", "Diamond").contains(membershipLevel)) {
                 throw new IllegalArgumentException("Invalid membership level value.");
             }
-            conditions.add("lc.TierLevel = ?");
-            parameters.add(membershipLevel);
-        }
-
-        if (!conditions.isEmpty()) {
-            sql.append(" AND ");
-            sql.append(String.join(" AND ", conditions));
+            sql.append(" AND lc.TierLevel = ?");
+            params.add(membershipLevel);
         }
 
         sql.append(" GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel ");
-        sql.append(" ORDER BY c.CustomerID");
+        sql.append(" ORDER BY c.CustomerID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+        params.add(offset);
+        params.add(pageSize);
 
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql.toString())) {
-            for (int i = 0; i < parameters.size(); i++) {
-                stmt.setObject(i + 1, parameters.get(i));
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
             }
-
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Customer customer = new Customer();
@@ -196,25 +159,98 @@ public class CustomerDAO {
                     customer.setAddress(rs.getString("Address"));
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
-
-                    // Apply keyword filter in Java if keyword is provided
-                    if (keyword != null && !keyword.trim().isEmpty()) {
-                        if (keyword.length() > 100) {
-                            throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
-                        }
-                        String normalizedFullName = normalizeVietnamese(customer.getFullName());
-                        String normalizedEmail = normalizeVietnamese(customer.getEmail());
-                        String normalizedPhone = customer.getPhone().toLowerCase();
-                        if (normalizedFullName.contains(keyword) || normalizedPhone.contains(keyword) || normalizedEmail.contains(keyword)) {
-                            customers.add(customer);
-                        }
-                    } else {
-                        customers.add(customer);
-                    }
+                    customers.add(customer);
                 }
             }
         }
+
+        // Apply keyword filter in memory if keyword exists
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (keyword.length() > 100) {
+                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+            }
+            final String normalizedKeyword = normalizeVietnamese(keyword);
+            customers = customers.stream()
+                    .filter(c -> {
+                        String fullName = c.getFullName() != null ? normalizeVietnamese(c.getFullName()) : "";
+                        String email = c.getEmail() != null ? normalizeVietnamese(c.getEmail()) : "";
+                        String phone = c.getPhone() != null ? normalizeVietnamese(c.getPhone()) : "";
+                        return fullName.contains(normalizedKeyword)
+                                || email.contains(normalizedKeyword)
+                                || phone.contains(normalizedKeyword);
+                    })
+                    .collect(Collectors.toList());
+        }
+
         return customers;
+    }
+
+    // Get total customer count for pagination
+    public int getTotalCustomerCount(String keyword, String gender, String membershipLevel) throws SQLException {
+        if (dbContext.getConnection() == null) {
+            throw new SQLException("Database connection is not established.");
+        }
+        List<Customer> customers = new ArrayList<>();
+        StringBuilder sql = new StringBuilder(
+                "SELECT c.CustomerID, c.FullName, u.Email, c.Phone "
+                + "FROM Customers c "
+                + "INNER JOIN Users u ON c.UserID = u.UserID "
+                + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
+                + "WHERE c.IsActive = 1 "
+        );
+        List<Object> params = new ArrayList<>();
+
+        if (gender != null && !gender.trim().isEmpty()) {
+            if (!List.of("Male", "Female", "Other").contains(gender)) {
+                throw new IllegalArgumentException("Invalid gender value.");
+            }
+            sql.append(" AND c.Gender = ?");
+            params.add(gender);
+        }
+
+        if (membershipLevel != null && !membershipLevel.trim().isEmpty()) {
+            if (!List.of("Bronze", "Silver", "Gold", "Platinum", "Diamond").contains(membershipLevel)) {
+                throw new IllegalArgumentException("Invalid membership level value.");
+            }
+            sql.append(" AND lc.TierLevel = ?");
+            params.add(membershipLevel);
+        }
+
+        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                stmt.setObject(i + 1, params.get(i));
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    Customer customer = new Customer();
+                    customer.setCustomerID(rs.getInt("CustomerID"));
+                    customer.setFullName(rs.getString("FullName"));
+                    customer.setEmail(rs.getString("Email"));
+                    customer.setPhone(rs.getString("Phone"));
+                    customers.add(customer);
+                }
+            }
+        }
+
+        // Apply keyword filter in memory if keyword exists
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (keyword.length() > 100) {
+                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+            }
+            final String normalizedKeyword = normalizeVietnamese(keyword);
+            customers = customers.stream()
+                    .filter(c -> {
+                        String fullName = c.getFullName() != null ? normalizeVietnamese(c.getFullName()) : "";
+                        String email = c.getEmail() != null ? normalizeVietnamese(c.getEmail()) : "";
+                        String phone = c.getPhone() != null ? normalizeVietnamese(c.getPhone()) : "";
+                        return fullName.contains(normalizedKeyword)
+                                || email.contains(normalizedKeyword)
+                                || phone.contains(normalizedKeyword);
+                    })
+                    .collect(Collectors.toList());
+        }
+
+        return customers.size();
     }
 
     // Normalize Vietnamese text by removing diacritics and converting to lowercase
@@ -282,22 +318,7 @@ public class CustomerDAO {
         }
     }
 
-    public boolean verifyPassword(String email, String password) throws SQLException {
-        if (dbContext.getConnection() == null) {
-            throw new SQLException("Database connection is not established.");
-        }
-        String sql = "SELECT PasswordHash FROM Users WHERE Email = ? AND IsActive = 1";
-        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql)) {
-            stmt.setString(1, email);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    String hashedPassword = rs.getString("PasswordHash");
-                    return BCrypt.checkpw(password, hashedPassword);
-                }
-            }
-        }
-        return false;
-    }
+   
 
     public void deleteCustomer(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {

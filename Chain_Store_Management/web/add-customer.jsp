@@ -56,10 +56,7 @@
                             <label for="address" class="form-label">Address</label>
                             <input type="text" class="form-control" id="address" name="address">
                         </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Password</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
+                       
                         <div class="modal-footer">
                             <button type="submit" class="btn btn-primary">Add Customer</button>
                             <a href="CustomerListServlet" class="btn btn-secondary">Cancel</a>

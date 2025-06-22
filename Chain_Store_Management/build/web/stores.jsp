@@ -210,7 +210,6 @@
                                 </ul>
                             </div>
                             <div class="p-15 p-b-0">
-                                <!-- Removed redundant sidebar search -->
                             </div>
                             <div class="pcoded-navigation-label">Store Management</div>
                             <ul class="pcoded-item pcoded-left-item">
@@ -280,7 +279,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
+                                    <a href="SearchCustomerServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>
@@ -362,7 +361,7 @@
                                                         <div class="m-b-20">
                                                             <form class="form-inline" action="stores" method="GET">
                                                                 <div class="form-group">
-                                                                    <input type="text" class="form-control" name="search" placeholder="Search by Name or Address..." value="${search}">
+                                                                    <input type="text" class="form-control" name="search" placeholder="Tìm kiếm theo tên hoặc địa chỉ..." value="${search}" autocomplete="off">
                                                                 </div>
                                                                 <div class="form-group">
                                                                     <select class="form-control" name="status">
@@ -421,27 +420,7 @@
                                                                             </c:forEach>
                                                                         </tbody>
                                                                     </table>
-                                                                    <c:if test="${totalPages > 1}">
-                                                                        <nav aria-label="Page navigation">
-                                                                            <ul class="pagination justify-content-center">
-                                                                                <c:if test="${currentPage > 1}">
-                                                                                    <li class="page-item">
-                                                                                        <a class="page-link" href="stores?page=${currentPage - 1}&search=${search}&status=${status}">Previous</a>
-                                                                                    </li>
-                                                                                </c:if>
-                                                                                <c:forEach begin="1" end="${totalPages}" var="i">
-                                                                                    <li class="page-item ${currentPage == i ? 'active' : ''}">
-                                                                                        <a class="page-link" href="stores?page=${i}&search=${search}&status=${status}">${i}</a>
-                                                                                    </li>
-                                                                                </c:forEach>
-                                                                                <c:if test="${currentPage < totalPages}">
-                                                                                    <li class="page-item">
-                                                                                        <a class="page-link" href="stores?page=${currentPage + 1}&search=${search}&status=${status}">Next</a>
-                                                                                    </li>
-                                                                                </c:if>
-                                                                            </ul>
-                                                                        </nav>
-                                                                    </c:if>
+                                                                    <jsp:include page="pagination.jsp" />
                                                                 </c:otherwise>
                                                             </c:choose>
                                                         </div>
@@ -469,33 +448,42 @@
                         </button>
                     </div>
                     <div class="modal-body">
+                        <c:if test="${not empty errors}">
+                            <div class="alert alert-danger">
+                                <ul>
+                                    <c:forEach var="error" items="${errors}">
+                                        <li><c:out value="${error}"/></li>
+                                    </c:forEach>
+                                </ul>
+                            </div>
+                        </c:if>
                         <form action="stores" method="post" id="storeForm">
                             <input type="hidden" name="action" value="save">
-                            <input type="hidden" id="storeId" name="storeID">
+                            <input type="hidden" id="storeId" name="storeID" value="${storeID}">
                             <div class="form-group row">
                                 <label for="storeName" class="col-sm-3 col-form-label">Name</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storeName" name="storeName" placeholder="e.g., South Branch" required>
+                                    <input type="text" class="form-control" id="storeName" name="storeName" placeholder="e.g., South Branch" value="${store.storeName}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storeAddress" class="col-sm-3 col-form-label">Address</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storeAddress" name="address" placeholder="e.g., 101 South Lane, City D" required>
+                                    <input type="text" class="form-control" id="storeAddress" name="address" placeholder="e.g., 101 South Lane, City D" value="${store.address}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storePhone" class="col-sm-3 col-form-label">Phone</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storePhone" name="phoneNumber" placeholder="e.g., (456) 789-0123" required>
+                                    <input type="text" class="form-control" id="storePhone" name="phoneNumber" placeholder="e.g., (456) 789-0123" value="${store.phoneNumber}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storeStatus" class="col-sm-3 col-form-label">Status</label>
                                 <div class="col-sm-9">
                                     <select class="form-control" id="storeStatus" name="isActive" required>
-                                        <option value="true">Active</option>
-                                        <option value="false">Inactive</option>
+                                        <option value="true" ${store.active ? 'selected' : ''}>Active</option>
+                                        <option value="false" ${!store.active ? 'selected' : ''}>Inactive</option>
                                     </select>
                                 </div>
                             </div>

@@ -252,7 +252,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="${pageContext.request.contextPath}/CustomerListServlet" class="waves-effect waves-dark">
+                                    <a href="${pageContext.request.contextPath}/SearchCustomerServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>

@@ -252,7 +252,7 @@
                                     </ul>
                                 </li>
                                 <li>
-                                    <a href="CustomerListServlet" class="waves-effect waves-dark">
+                                    <a href="SearchCustomerServlet" class="waves-effect waves-dark">
                                         <span class="pcoded-micon"><i class Calendars="ti-id-badge"></i></span>
                                         <span class="pcoded-mtext">Customers</span>
                                     </a>
