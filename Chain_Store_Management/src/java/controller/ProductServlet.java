@@ -40,6 +40,15 @@ public class ProductServlet extends HttpServlet {
         ProductDAO productDAO = null;
         try {
             productDAO = new ProductDAO();
+
+            // Xóa ảnh tạm nếu có tham số clearTemp
+            String clearTemp = request.getParameter("clearTemp");
+            if (clearTemp != null) {
+                int productId = Integer.parseInt(clearTemp);
+                request.getSession().removeAttribute("tempImageBytes_" + productId);
+                LOGGER.info("Cleared tempImageBytes for productId: " + productId);
+            }
+
             String search = cleanSearchKeyword(request.getParameter("search"));
             String message = request.getParameter("message");
             String messageType = request.getParameter("messageType");
@@ -95,7 +104,7 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("currentPage", currentPage);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalProducts", totalProducts);
-            request.setAttribute("baseUrl","products");
+            request.setAttribute("baseUrl", "products");
 
             if (message != null && messageType != null) {
                 request.setAttribute("message", message);

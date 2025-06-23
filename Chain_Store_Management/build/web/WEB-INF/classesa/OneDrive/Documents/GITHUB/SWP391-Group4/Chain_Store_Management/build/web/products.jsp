@@ -1,7 +1,6 @@
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@ taglib uri="http://java.sun.com/jsp/jstl/fmt" prefix="fmt" %>
-<%@page contentType="text/html" pageEncoding="UTF-8"%>
+<%@page contentType="text/html" pageEncoding="UTF-8" import="java.util.List, java.util.Base64" %>
 <!DOCTYPE html>
 <html>
     <head>
@@ -252,195 +251,213 @@
                                                                             </tr>
 
                                                                             <!-- View Modal -->
-                                                                        <div class="modal fade" id="viewModal${product.productID}" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel${product.productID}" aria-hidden="true">
-                                                                            <div class="modal-dialog" role="document">
-                                                                                <div class="modal-content">
-                                                                                    <div class="modal-header">
-                                                                                        <h5 class="modal-title" id="viewModalLabel${product.productID}">View Product</h5>
-                                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                            <span aria-hidden="true">×</span>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                    <div class="modal-body">
-                                                                                        <p><strong>ID:</strong> <c:out value="${product.productID}"/></p>
-                                                                                        <p><strong>Name:</strong> <c:out value="${product.productName}"/></p>
-                                                                                        <p><strong>Category:</strong> <c:out value="${product.categoryName}"/></p>
-                                                                                        <p><strong>Size:</strong>
-                                                                                            <c:set var="sizeValue" value="N/A"/>
-                                                                                            <c:forEach var="size" items="${sizeSuggestions}">
-                                                                                                <c:if test="${size.sizeID == product.sizeID}">
-                                                                                                    <c:set var="sizeValue" value="${size.sizeValue}"/>
-                                                                                                </c:if>
-                                                                                            </c:forEach>
-                                                                                            <c:out value="${sizeValue}"/>
-                                                                                        </p>
-                                                                                        <p><strong>Color:</strong>
-                                                                                            <c:set var="colorValue" value="N/A"/>
-                                                                                            <c:forEach var="color" items="${colorSuggestions}">
-                                                                                                <c:if test="${color.colorID == product.colorID}">
-                                                                                                    <c:set var="colorValue" value="${color.colorValue}"/>
-                                                                                                </c:if>
-                                                                                            </c:forEach>
-                                                                                            <c:out value="${colorValue}"/>
-                                                                                        </p>
-                                                                                        <p><strong>Price:</strong> <fmt:formatNumber value="${product.sellingPrice}" type="currency" currencyCode="VND"/></p>
-                                                                                        <p><strong>Stock:</strong> <c:out value="${product.stockQuantity}"/></p>
-                                                                                        <p><strong>Unit:</strong>
-                                                                                            <c:set var="unitValue" value="${product.unit}"/>
-                                                                                            <c:choose>
-                                                                                                <c:when test="${unitValue == 'cái'}">Cái</c:when>
-                                                                                                <c:when test="${unitValue == 'chiếc'}">Chiếc</c:when>
-                                                                                                <c:when test="${unitValue == 'bộ'}">Bộ</c:when>
-                                                                                                <c:when test="${unitValue == 'thùng'}">Thùng</c:when>
-                                                                                                <c:otherwise><c:out value="${unitValue}"/></c:otherwise>
-                                                                                            </c:choose>
-                                                                                        </p>
-                                                                                        <p><strong>Barcode:</strong> <c:out value="${product.barcode}"/></p>
-                                                                                        <p><strong>Product Code:</strong> <c:out value="${product.productCode}"/></p>
-                                                                                        <p><strong>Release Date:</strong> <fmt:formatDate value="${product.releaseDate}" pattern="dd/MM/yyyy"/></p>
-                                                                                        <p><strong>Status:</strong> <span class="badge badge-${product.isActive ? 'success' : 'danger'}"><c:out value="${product.isActive ? 'Active' : 'Inactive'}"/></span></p>
-                                                                                        <p><strong>Description:</strong> <c:out value="${product.description}"/></p>
-                                                                                        <c:if test="${not empty product.images}">
-                                                                                            <p><strong>Images:</strong></p>
-                                                                                            <c:forTokens var="image" items="${product.images}" delims=";">
-                                                                                                <img src="${image}" alt="Product Image" style="max-width: 200px; margin: 5px;" onload="this.style.display = 'block';">
-                                                                                            </c:forTokens>
-                                                                                        </c:if>
-                                                                                    </div>
-                                                                                    <div class="modal-footer">
-                                                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                                                                                        <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <!-- Edit Modal -->
-                                                                        <div class="modal fade" id="editModal${product.productID}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel${product.productID}" aria-hidden="true">
-                                                                            <div class="modal-dialog" role="document">
-                                                                                <div class="modal-content">
-                                                                                    <div class="modal-header">
-                                                                                        <h5 class="modal-title" id="editModalLabel${product.productID}">Edit Product</h5>
-                                                                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                                                                                            <span aria-hidden="true">×</span>
-                                                                                        </button>
-                                                                                    </div>
-                                                                                    <div class="modal-body">
-                                                                                        <form action="${pageContext.request.contextPath}/update-product" method="post" enctype="multipart/form-data">
-                                                                                            <input type="hidden" name="productId" value="${product.productID}">
-                                                                                            <input type="hidden" name="action" value="save">
-                                                                                            <input type="hidden" name="search" value="${param.search}">
-                                                                                            <input type="hidden" name="page" value="${currentPage}">
-                                                                                            <div class="form-group row ${empty product.productName || (not empty errors and errors.contains('Product name is required.')) ? 'invalid' : ''}">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Tên hàng</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <input type="text" class="form-control" name="productName" value="${not empty product ? product.productName : ''}" required>
-                                                                                                    <div class="invalid-feedback">Tên hàng không được để trống.</div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Danh mục</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <select class="form-control" name="categoryID" required>
-                                                                                                        <option value="">Chọn danh mục</option>
-                                                                                                        <c:forEach var="category" items="${categories}">
-                                                                                                            <option value="${category.categoryID}" ${not empty product and category.categoryID == product.categoryID ? 'selected' : ''}>${category.categoryName}</option>
-                                                                                                        </c:forEach>
-                                                                                                    </select>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Mã vạch</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <input type="text" class="form-control" name="barcode" value="${not empty product ? product.barcode : ''}">
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Mã sản phẩm</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <input type="text" class="form-control" name="productCode" value="${not empty product ? product.productCode : ''}">
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Kích thước</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <select class="form-control" name="sizeID" required>
-                                                                                                        <option value="">Chọn kích thước</option>
-                                                                                                        <c:forEach var="size" items="${sizeSuggestions}">
-                                                                                                            <option value="${size.sizeID}" ${not empty product and size.sizeID == product.sizeID ? 'selected' : ''}>${size.sizeValue}</option>
-                                                                                                        </c:forEach>
-                                                                                                    </select>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Màu sắc</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <select class="form-control" name="colorID" required>
-                                                                                                        <option value="">Chọn màu sắc</option>
-                                                                                                        <c:forEach var="color" items="${colorSuggestions}">
-                                                                                                            <option value="${color.colorID}" ${not empty product and color.colorID == product.colorID ? 'selected' : ''}>${color.colorValue}</option>
-                                                                                                        </c:forEach>
-                                                                                                    </select>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row ${empty product.unit || (not empty errors and errors.contains('Unit is required.')) ? 'invalid' : ''}">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Đơn vị</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <select class="form-control" name="unit" required>
-                                                                                                        <option value="">Chọn đơn vị</option>
-                                                                                                        <option value="cái" ${product.unit == 'cái' ? 'selected' : ''}>Cái</option>
-                                                                                                        <option value="chiếc" ${product.unit == 'chiếc' ? 'selected' : ''}>Chiếc</option>
-                                                                                                        <option value="bộ" ${product.unit == 'bộ' ? 'selected' : ''}>Bộ</option>
-                                                                                                        <option value="thùng" ${product.unit == 'thùng' ? 'selected' : ''}>Thùng</option>
-                                                                                                    </select>
-                                                                                                    <div class="invalid-feedback">Đơn vị không được để trống.</div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row ${empty product.sellingPrice || (not empty errors and errors.contains('Price is required.')) ? 'invalid' : ''}">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Giá bán</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <input type="number" step="0.01" class="form-control" name="sellingPrice" value="${not empty product ? product.sellingPrice : ''}" required>
-                                                                                                    <div class="invalid-feedback">Giá bán không được để trống.</div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row ${empty product.stockQuantity || (not empty errors and errors.contains('Stock quantity is required.')) ? 'invalid' : ''}">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Số lượng tồn</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <input type="number" class="form-control" name="stockQuantity" value="${not empty product ? product.stockQuantity : ''}" required>
-                                                                                                    <div class="invalid-feedback">Số lượng tồn không được để trống.</div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row ${empty product.description || (not empty errors and errors.contains('Description is required.')) ? 'invalid' : ''}">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Mô tả</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <textarea class="form-control" name="description" rows="4" required>${not empty product ? product.description : ''}</textarea>
-                                                                                                    <div class="invalid-feedback">Mô tả không được để trống.</div>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <label class="col-sm-3 col-form-label detail-label">Hình ảnh</label>
-                                                                                                <div class="col-sm-9">
-                                                                                                    <c:forTokens var="image" items="${product.images}" delims=";">
-                                                                                                        <img src="${image}" alt="Current Image" style="max-width: 200px; margin: 5px;">
-                                                                                                    </c:forTokens>
-                                                                                                    <input type="file" class="form-control-file" name="image1" accept="image/*">
-                                                                                                    <input type="file" class="form-control-file" name="image2" accept="image/*">
-                                                                                                    <input type="file" class="form-control-file" name="image3" accept="image/*">
-
-                                                                                                </div>
-                                                                                            </div>
-                                                                                            <div class="form-group row">
-                                                                                                <div class="col-sm-9 offset-sm-3">
-                                                                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                                                                                                    <button type="submit" class="btn btn-success">Save Changes</button>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </form>
+                                                                            <div class="modal fade" id="viewModal${product.productID}" tabindex="-1" role="dialog" aria-labelledby="viewModalLabel${product.productID}" aria-hidden="true">
+                                                                                <div class="modal-dialog" role="document">
+                                                                                    <div class="modal-content">
+                                                                                        <div class="modal-header">
+                                                                                            <h5 class="modal-title" id="viewModalLabel${product.productID}">View Product</h5>
+                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                                                                                <span aria-hidden="true">×</span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <div class="modal-body">
+                                                                                            <p><strong>ID:</strong> <c:out value="${product.productID}"/></p>
+                                                                                            <p><strong>Name:</strong> <c:out value="${product.productName}"/></p>
+                                                                                            <p><strong>Category:</strong> <c:out value="${product.categoryName}"/></p>
+                                                                                            <p><strong>Size:</strong>
+                                                                                                <c:set var="sizeValue" value="N/A"/>
+                                                                                                <c:forEach var="size" items="${sizeSuggestions}">
+                                                                                                    <c:if test="${size.sizeID == product.sizeID}">
+                                                                                                        <c:set var="sizeValue" value="${size.sizeValue}"/>
+                                                                                                    </c:if>
+                                                                                                </c:forEach>
+                                                                                                <c:out value="${sizeValue}"/>
+                                                                                            </p>
+                                                                                            <p><strong>Color:</strong>
+                                                                                                <c:set var="colorValue" value="N/A"/>
+                                                                                                <c:forEach var="color" items="${colorSuggestions}">
+                                                                                                    <c:if test="${color.colorID == product.colorID}">
+                                                                                                        <c:set var="colorValue" value="${color.colorValue}"/>
+                                                                                                    </c:if>
+                                                                                                </c:forEach>
+                                                                                                <c:out value="${colorValue}"/>
+                                                                                            </p>
+                                                                                            <p><strong>Price:</strong> <fmt:formatNumber value="${product.sellingPrice}" type="currency" currencyCode="VND"/></p>
+                                                                                            <p><strong>Stock:</strong> <c:out value="${product.stockQuantity}"/></p>
+                                                                                            <p><strong>Unit:</strong>
+                                                                                                <c:set var="unitValue" value="${product.unit}"/>
+                                                                                                <c:choose>
+                                                                                                    <c:when test="${unitValue == 'cái'}">Cái</c:when>
+                                                                                                    <c:when test="${unitValue == 'chiếc'}">Chiếc</c:when>
+                                                                                                    <c:when test="${unitValue == 'bộ'}">Bộ</c:when>
+                                                                                                    <c:when test="${unitValue == 'thùng'}">Thùng</c:when>
+                                                                                                    <c:otherwise><c:out value="${unitValue}"/></c:otherwise>
+                                                                                                </c:choose>
+                                                                                            </p>
+                                                                                            <p><strong>Barcode:</strong> <c:out value="${product.barcode}"/></p>
+                                                                                            <p><strong>Product Code:</strong> <c:out value="${product.productCode}"/></p>
+                                                                                            <p><strong>Release Date:</strong> <fmt:formatDate value="${product.releaseDate}" pattern="dd/MM/yyyy"/></p>
+                                                                                            <p><strong>Status:</strong> <span class="badge badge-${product.isActive ? 'success' : 'danger'}"><c:out value="${product.isActive ? 'Active' : 'Inactive'}"/></span></p>
+                                                                                            <p><strong>Description:</strong> <c:out value="${product.description}"/></p>
+                                                                                            <c:if test="${not empty product.images}">
+                                                                                                <p><strong>Images:</strong></p>
+                                                                                                <c:forTokens var="image" items="${product.images}" delims=";">
+                                                                                                    <img src="${image}" alt="Product Image" style="max-width: 200px; margin: 5px;" onload="this.style.display='block';">
+                                                                                                </c:forTokens>
+                                                                                            </c:if>
+                                                                                        </div>
+                                                                                        <div class="modal-footer">
+                                                                                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                                                                            <button type="button" class="btn btn-primary" onclick="window.print()">Print</button>
+                                                                                        </div>
                                                                                     </div>
                                                                                 </div>
                                                                             </div>
-                                                                        </div>
-                                                                    </c:forEach>
+
+                                                                            <!-- Edit Modal -->
+                                                                            <div class="modal fade" id="editModal${product.productID}" tabindex="-1" role="dialog" aria-labelledby="editModalLabel${product.productID}" aria-hidden="true">
+                                                                                <div class="modal-dialog" role="document">
+                                                                                    <div class="modal-content">
+                                                                                        <div class="modal-header">
+                                                                                            <h5 class="modal-title" id="editModalLabel${product.productID}">Edit Product</h5>
+                                                                                            <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="clearTempImages(${product.productID})">
+                                                                                                <span aria-hidden="true">×</span>
+                                                                                            </button>
+                                                                                        </div>
+                                                                                        <div class="modal-body">
+                                                                                            <form action="${pageContext.request.contextPath}/update-product" method="post" enctype="multipart/form-data">
+                                                                                                <input type="hidden" name="productId" value="${product.productID}">
+                                                                                                <input type="hidden" name="action" value="save">
+                                                                                                <input type="hidden" name="search" value="${param.search}">
+                                                                                                <input type="hidden" name="page" value="${currentPage}">
+                                                                                                <div class="form-group row ${empty product.productName || (not empty errors and errors.contains('Product name is required.')) ? 'invalid' : ''}">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Tên hàng</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <input type="text" class="form-control" name="productName" value="${not empty product ? product.productName : ''}" required>
+                                                                                                        <div class="invalid-feedback">Tên hàng không được để trống.</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Danh mục</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <select class="form-control" name="categoryID" required>
+                                                                                                            <option value="">Chọn danh mục</option>
+                                                                                                            <c:forEach var="category" items="${categories}">
+                                                                                                                <option value="${category.categoryID}" ${not empty product and category.categoryID == product.categoryID ? 'selected' : ''}>${category.categoryName}</option>
+                                                                                                            </c:forEach>
+                                                                                                        </select>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Mã vạch</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <input type="text" class="form-control" name="barcode" value="${not empty product ? product.barcode : ''}">
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Mã sản phẩm</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <input type="text" class="form-control" name="productCode" value="${not empty product ? product.productCode : ''}">
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Kích thước</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <select class="form-control" name="sizeID" required>
+                                                                                                            <option value="">Chọn kích thước</option>
+                                                                                                            <c:forEach var="size" items="${sizeSuggestions}">
+                                                                                                                <option value="${size.sizeID}" ${not empty product and size.sizeID == product.sizeID ? 'selected' : ''}>${size.sizeValue}</option>
+                                                                                                            </c:forEach>
+                                                                                                        </select>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Màu sắc</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <select class="form-control" name="colorID" required>
+                                                                                                            <option value="">Chọn màu sắc</option>
+                                                                                                            <c:forEach var="color" items="${colorSuggestions}">
+                                                                                                                <option value="${color.colorID}" ${not empty product and color.colorID == product.colorID ? 'selected' : ''}>${color.colorValue}</option>
+                                                                                                            </c:forEach>
+                                                                                                        </select>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row ${empty product.unit || (not empty errors and errors.contains('Unit is required.')) ? 'invalid' : ''}">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Đơn vị</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <select class="form-control" name="unit" required>
+                                                                                                            <option value="">Chọn đơn vị</option>
+                                                                                                            <option value="cái" ${product.unit == 'cái' ? 'selected' : ''}>Cái</option>
+                                                                                                            <option value="chiếc" ${product.unit == 'chiếc' ? 'selected' : ''}>Chiếc</option>
+                                                                                                            <option value="bộ" ${product.unit == 'bộ' ? 'selected' : ''}>Bộ</option>
+                                                                                                            <option value="thùng" ${product.unit == 'thùng' ? 'selected' : ''}>Thùng</option>
+                                                                                                        </select>
+                                                                                                        <div class="invalid-feedback">Đơn vị không được để trống.</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row ${empty product.sellingPrice || (not empty errors and errors.contains('Price is required.')) ? 'invalid' : ''}">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Giá bán</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <input type="number" step="0.01" class="form-control" name="sellingPrice" value="${not empty product ? product.sellingPrice : ''}" required>
+                                                                                                        <div class="invalid-feedback">Giá bán không được để trống.</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row ${empty product.stockQuantity || (not empty errors and errors.contains('Stock quantity is required.')) ? 'invalid' : ''}">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Số lượng tồn</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <input type="number" class="form-control" name="stockQuantity" value="${not empty product ? product.stockQuantity : ''}" required>
+                                                                                                        <div class="invalid-feedback">Số lượng tồn không được để trống.</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row ${empty product.description || (not empty errors and errors.contains('Description is required.')) ? 'invalid' : ''}">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Mô tả</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <textarea class="form-control" name="description" rows="4" required>${not empty product ? product.description : ''}</textarea>
+                                                                                                        <div class="invalid-feedback">Mô tả không được để trống.</div>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <label class="col-sm-3 col-form-label detail-label">Hình ảnh</label>
+                                                                                                    <div class="col-sm-9">
+                                                                                                        <!-- Hiển thị ảnh hiện tại từ database -->
+                                                                                                        <c:if test="${not empty product.images}">
+                                                                                                            <c:forTokens var="image" items="${product.images}" delims=";">
+                                                                                                                <img src="${image}" alt="Current Image" style="max-width: 200px; margin: 5px;">
+                                                                                                            </c:forTokens>
+                                                                                                        </c:if>
+                                                                                                        <!-- Hiển thị ảnh tạm thời từ session (byte[] to base64) -->
+                                                                                                        <c:if test="${not empty tempImageBytes and not empty product}">
+                                                                                                            <% 
+                                                                                                                java.util.List<byte[]> tempImageBytes = (java.util.List<byte[]>) request.getAttribute("tempImageBytes");
+                                                                                                                if (tempImageBytes != null) {
+                                                                                                                    for (byte[] imageBytes : tempImageBytes) {
+                                                                                                                        String base64Image = "data:image/jpeg;base64," + java.util.Base64.getEncoder().encodeToString(imageBytes);
+                                                                                                            %>
+                                                                                                                <img src="<%= base64Image %>" alt="Temp Image" style="max-width: 200px; margin: 5px;">
+                                                                                                            <%
+                                                                                                                    }
+                                                                                                                } else {
+                                                                                                                    out.println("No temp images found for productId: " + request.getAttribute("productId"));
+                                                                                                                }
+                                                                                                            %>
+                                                                                                        </c:if>
+                                                                                                        <input type="file" class="form-control-file" name="image1" accept="image/*">
+                                                                                                        <input type="file" class="form-control-file" name="image2" accept="image/*">
+                                                                                                        <input type="file" class="form-control-file" name="image3" accept="image/*">
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                                <div class="form-group row">
+                                                                                                    <div class="col-sm-9 offset-sm-3">
+                                                                                                        <button type="button" class="btn btn-secondary" data-dismiss="modal" onclick="clearTempImages(${product.productID})">Cancel</button>
+                                                                                                        <button type="submit" class="btn btn-success">Save Changes</button>
+                                                                                                    </div>
+                                                                                                </div>
+                                                                                            </form>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </div>
+                                                                        </c:forEach>
                                                                     </tbody>
                                                                 </table>
                                                                 <c:if test="${empty products}">
@@ -478,10 +495,9 @@
         <script src="assets/js/vertical-layout.min.js"></script>
         <script type="text/javascript" src="assets/js/script.js"></script>
         <script>
-                                                                                                // Minimal JavaScript for print functionality
-                                                                                                function printModal(productId) {
-                                                                                                    window.print();
-                                                                                                }
+            function clearTempImages(productId) {
+                window.location.href = "${pageContext.request.contextPath}/products?clearTemp=" + productId;
+            }
         </script>
     </body>
 </html>

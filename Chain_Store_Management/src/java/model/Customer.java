@@ -17,6 +17,16 @@ public class Customer {
     private String membershipLevel;
     private String password; // Only used for insert
     private int userID; // To link with Users table
+    private String img;
+
+    public String getImg() {
+        return img;
+    }
+
+    public void setImg(String img) {
+        this.img = img;
+    }
+    
 
     // Getters and Setters
     public int getCustomerID() {

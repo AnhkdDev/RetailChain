@@ -11,17 +11,18 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.Part;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.nio.file.Paths;
 
 @WebServlet(name = "UpdateProductServlet", urlPatterns = {"/update-product"})
 @MultipartConfig(
-        fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-        maxFileSize = 1024 * 1024 * 10, // 10MB
-        maxRequestSize = 1024 * 1024 * 50 // 50MB
+    fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+    maxFileSize = 1024 * 1024 * 10,      // 10MB
+    maxRequestSize = 1024 * 1024 * 50    // 50MB
 )
 public class UpdateProductServlet extends HttpServlet {
 
@@ -35,6 +36,7 @@ public class UpdateProductServlet extends HttpServlet {
 
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
+        LOGGER.info("Processing request for /update-product");
         response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -42,117 +44,89 @@ public class UpdateProductServlet extends HttpServlet {
         response.setDateHeader("Expires", 0);
 
         String action = request.getParameter("action");
+        LOGGER.info("Action parameter: " + action);
         List<String> errors = new ArrayList<>();
 
         if ("save".equals(action)) {
             try {
-                int productId = Integer.parseInt(request.getParameter("productId"));
-                String productName = request.getParameter("productName");
-                String description = request.getParameter("description");
-                BigDecimal sellingPrice = new BigDecimal(request.getParameter("sellingPrice"));
-                int categoryID = Integer.parseInt(request.getParameter("categoryID"));
-                Integer sizeID = request.getParameter("sizeID") != null && !request.getParameter("sizeID").isEmpty() ? Integer.parseInt(request.getParameter("sizeID")) : null;
-                Integer colorID = request.getParameter("colorID") != null && !request.getParameter("colorID").isEmpty() ? Integer.parseInt(request.getParameter("colorID")) : null;
-                String unit = request.getParameter("unit");
-                int stockQuantity = Integer.parseInt(request.getParameter("stockQuantity"));
-                String barcode = request.getParameter("barcode");
-                String productCode = request.getParameter("productCode");
+                int productId = Integer.parseInt(request.getParameter("productId").trim());
+                LOGGER.info("Processing productId: " + productId);
+                String productName = request.getParameter("productName") != null ? request.getParameter("productName").trim() : "";
+                String description = request.getParameter("description") != null ? request.getParameter("description").trim() : "";
+                BigDecimal sellingPrice = new BigDecimal(request.getParameter("sellingPrice").trim());
+                int categoryID = Integer.parseInt(request.getParameter("categoryID").trim());
+                Integer sizeID = request.getParameter("sizeID") != null && !request.getParameter("sizeID").trim().isEmpty() ?
+                                Integer.parseInt(request.getParameter("sizeID").trim()) : null;
+                Integer colorID = request.getParameter("colorID") != null && !request.getParameter("colorID").trim().isEmpty() ?
+                                Integer.parseInt(request.getParameter("colorID").trim()) : null;
+                String unit = request.getParameter("unit") != null ? request.getParameter("unit").trim() : "";
+                int stockQuantity = Integer.parseInt(request.getParameter("stockQuantity").trim());
+                String barcode = request.getParameter("barcode") != null ? request.getParameter("barcode").trim() : "";
+                String productCode = request.getParameter("productCode") != null ? request.getParameter("productCode").trim() : "";
 
-                // Validation
-                if (productName == null || productName.trim().isEmpty()) {
-                    errors.add("Product name is required.");
-                }
-                if (unit == null || unit.trim().isEmpty()) {
-                    errors.add("Unit is required.");
-                }
-                if (description == null || description.trim().isEmpty()) {
-                    errors.add("Description is required.");
-                }
-                if (sellingPrice == null || sellingPrice.compareTo(BigDecimal.ZERO) <= 0) {
-                    errors.add("Selling price must be greater than zero.");
-                }
-                if (stockQuantity < 0) {
-                    errors.add("Stock quantity cannot be negative.");
-                }
+                if (productName.isEmpty()) errors.add("Tên sản phẩm không được để trống.");
+                if (unit.isEmpty()) errors.add("Đơn vị không được để trống.");
+                if (description.isEmpty()) errors.add("Mô tả không được để trống.");
+                if (sellingPrice.compareTo(BigDecimal.ZERO) <= 0) errors.add("Giá bán phải lớn hơn 0.");
+                if (stockQuantity < 0) errors.add("Số lượng tồn không được âm.");
 
+                // Lấy danh sách Part từ request
                 List<Part> images = new ArrayList<>();
-                for (int i = 1; i <= 5; i++) {
+                for (int i = 1; i <= 3; i++) {
                     Part filePart = request.getPart("image" + i);
                     if (filePart != null && filePart.getSize() > 0) {
-                        String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString().toLowerCase();
-                        if (!fileName.endsWith(".jpg") && !fileName.endsWith(".png")) {
-                            errors.add("Image " + i + " must be in .jpg or .png format. Uploaded: " + fileName);
-                        } else {
-                            images.add(filePart);
-                        }
+                        LOGGER.info("Found Part for image" + i + ": size=" + filePart.getSize() + ", contentType=" + filePart.getContentType());
+                        images.add(filePart);
+                    } else {
+                        LOGGER.warning("No valid Part found for image" + i + ". Check file input.");
                     }
                 }
 
                 if (errors.isEmpty()) {
-                    // Fetch existing product to preserve images if no new ones are uploaded
                     Product existingProduct = productDAO.getProductById(productId);
-                    String existingImages = (existingProduct != null && existingProduct.getImages() != null) ? existingProduct.getImages() : "";
-                    if (images.isEmpty()) {
-                        images = null; // Use existing images if no new ones
-                    } else {
-                        StringBuilder imagePaths = new StringBuilder();
-                        for (int i = 0; i < images.size(); i++) {
-                            Part filePart = images.get(i);
-                            String fileName = Paths.get(filePart.getSubmittedFileName()).getFileName().toString();
-                            String baseName = productName.length() > 10 ? productName.substring(0, 10) : productName;
-                            String uploadPathStr = "C:/Uploads/products/" + baseName + "_" + System.currentTimeMillis() + "_" + fileName;
-                            filePart.write(uploadPathStr);
-                            if (imagePaths.length() > 0) {
-                                imagePaths.append(";");
-                            }
-                            imagePaths.append(uploadPathStr.substring(0, Math.min(uploadPathStr.length(), 200)));
-                        }
-                        existingImages = imagePaths.toString();
-                    }
+                    String existingImages = (existingProduct != null && existingProduct.getImages() != null) ?
+                                          existingProduct.getImages() : "";
+                    LOGGER.info("Existing images for productId " + productId + ": " + existingImages);
 
-                    boolean updated = productDAO.updateProduct(productId, productName, description, sellingPrice, categoryID, sizeID, colorID, unit, stockQuantity, barcode, productCode, images);
+                    boolean updated = productDAO.updateProduct(productId, productName, description, sellingPrice,
+                            categoryID, sizeID, colorID, unit, stockQuantity, barcode, productCode, images);
                     if (updated) {
-                        request.setAttribute("message", "Product updated successfully.");
-                        request.setAttribute("messageType", "success");
+                        LOGGER.info("Removed tempImageBytes for productId: " + productId + " after successful update");
+                        String encodedMessage = URLEncoder.encode("Cập nhật sản phẩm thành công", StandardCharsets.UTF_8.toString());
+                        response.sendRedirect(request.getContextPath() + "/products?message=" + encodedMessage + "&messageType=success" +
+                                (request.getParameter("search") != null ? "&search=" + java.net.URLEncoder.encode(request.getParameter("search"), StandardCharsets.UTF_8.toString()) : "") +
+                                (request.getParameter("page") != null ? "&page=" + request.getParameter("page") : ""));
+                        return;
                     } else {
-                        errors.add("Failed to update product. Please check the data or try again.");
+                        errors.add("Cập nhật sản phẩm thất bại. Vui lòng kiểm tra dữ liệu hoặc thử lại.");
                     }
                 } else {
-                    // Pre-populate form with submitted data for error display
-                    request.setAttribute("product", new Product(productName, categoryID, sizeID, colorID, sellingPrice, description, "", true, barcode, productCode, stockQuantity, unit));
+                    Product existingProduct = productDAO.getProductById(productId);
+                    String existingImages = (existingProduct != null && existingProduct.getImages() != null) ?
+                                          existingProduct.getImages() : "";
+                    Product tempProduct = new Product(productName, categoryID, sizeID, colorID, sellingPrice,
+                            description, existingImages, true, barcode, productCode, stockQuantity, unit);
+                    request.setAttribute("product", tempProduct);
                     request.setAttribute("productId", productId);
                 }
             } catch (NumberFormatException e) {
-                LOGGER.log(Level.SEVERE, "Invalid numeric data: {0}", e.getMessage());
-                errors.add("Invalid data format. Please ensure all numeric fields are correct.");
+                LOGGER.log(Level.SEVERE, "Dữ liệu số không hợp lệ: {0}", e.getMessage());
+                errors.add("Định dạng dữ liệu không hợp lệ. Vui lòng kiểm tra các trường số.");
             } catch (Exception e) {
-                LOGGER.log(Level.SEVERE, "Error updating product: {0}", e.getMessage());
-                errors.add("An error occurred: " + e.getMessage());
+                LOGGER.log(Level.SEVERE, "Lỗi khi cập nhật sản phẩm: {0}", e.getMessage());
+                errors.add("Đã xảy ra lỗi: " + e.getMessage());
             }
 
             if (!errors.isEmpty()) {
                 request.setAttribute("errors", errors);
-                request.setAttribute("message", "Please correct the errors below.");
+                request.setAttribute("message", "Vui lòng sửa các lỗi sau:");
                 request.setAttribute("messageType", "danger");
-                // Forward to products.jsp to display errors in the modal
                 request.getRequestDispatcher("/products.jsp").forward(request, response);
                 return;
             }
         }
 
-        // Redirect back to products page to reload on success
-        StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/products");
-        String search = request.getParameter("search");
-        String page = request.getParameter("page");
-        boolean hasQuery = false;
-        if (search != null && !search.trim().isEmpty()) {
-            redirectUrl.append("?search=").append(java.net.URLEncoder.encode(search, "UTF-8"));
-            hasQuery = true;
-        }
-        if (page != null && !page.trim().isEmpty()) {
-            redirectUrl.append(hasQuery ? "&" : "?").append("page=").append(page);
-        }
-        response.sendRedirect(redirectUrl.toString());
+        response.sendRedirect(request.getContextPath() + "/products");
     }
 
     @Override
@@ -170,6 +144,6 @@ public class UpdateProductServlet extends HttpServlet {
 
     @Override
     public String getServletInfo() {
-        return "Servlet for updating product details";
+        return "Servlet để cập nhật thông tin sản phẩm";
     }
 }
