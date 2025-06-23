@@ -19,9 +19,9 @@ import java.nio.file.Paths;
 
 @WebServlet(name = "UpdateProductServlet", urlPatterns = {"/update-product"})
 @MultipartConfig(
-    fileSizeThreshold = 1024 * 1024 * 2, // 2MB
-    maxFileSize = 1024 * 1024 * 10,      // 10MB
-    maxRequestSize = 1024 * 1024 * 50    // 50MB
+        fileSizeThreshold = 1024 * 1024 * 2, // 2MB
+        maxFileSize = 1024 * 1024 * 10, // 10MB
+        maxRequestSize = 1024 * 1024 * 50 // 50MB
 )
 public class UpdateProductServlet extends HttpServlet {
 
@@ -36,7 +36,7 @@ public class UpdateProductServlet extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
-        request.setCharacterEncoding("UTF-8"); // Ensure UTF-8 encoding for request parameters
+        request.setCharacterEncoding("UTF-8");
         response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         response.setHeader("Pragma", "no-cache");
         response.setDateHeader("Expires", 0);
@@ -102,7 +102,9 @@ public class UpdateProductServlet extends HttpServlet {
                             String baseName = productName.length() > 10 ? productName.substring(0, 10) : productName;
                             String uploadPathStr = "C:/Uploads/products/" + baseName + "_" + System.currentTimeMillis() + "_" + fileName;
                             filePart.write(uploadPathStr);
-                            if (imagePaths.length() > 0) imagePaths.append(";");
+                            if (imagePaths.length() > 0) {
+                                imagePaths.append(";");
+                            }
                             imagePaths.append(uploadPathStr.substring(0, Math.min(uploadPathStr.length(), 200)));
                         }
                         existingImages = imagePaths.toString();
@@ -139,12 +141,18 @@ public class UpdateProductServlet extends HttpServlet {
         }
 
         // Redirect back to products page to reload on success
-        String redirectUrl = request.getContextPath() + "/products";
+        StringBuilder redirectUrl = new StringBuilder(request.getContextPath() + "/products");
         String search = request.getParameter("search");
         String page = request.getParameter("page");
-        if (search != null && !search.isEmpty()) redirectUrl += "?search=" + java.net.URLEncoder.encode(search, "UTF-8");
-        if (page != null && !page.isEmpty()) redirectUrl += (search != null ? "&" : "?") + "page=" + page;
-        response.sendRedirect(redirectUrl);
+        boolean hasQuery = false;
+        if (search != null && !search.trim().isEmpty()) {
+            redirectUrl.append("?search=").append(java.net.URLEncoder.encode(search, "UTF-8"));
+            hasQuery = true;
+        }
+        if (page != null && !page.trim().isEmpty()) {
+            redirectUrl.append(hasQuery ? "&" : "?").append("page=").append(page);
+        }
+        response.sendRedirect(redirectUrl.toString());
     }
 
     @Override

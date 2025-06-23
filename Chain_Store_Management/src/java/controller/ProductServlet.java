@@ -95,7 +95,8 @@ public class ProductServlet extends HttpServlet {
             request.setAttribute("currentPage", currentPage);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalProducts", totalProducts);
-            request.setAttribute("baseUrl", request.getContextPath() + "/products");
+            request.setAttribute("baseUrl","products");
+
             if (message != null && messageType != null) {
                 request.setAttribute("message", message);
                 request.setAttribute("messageType", messageType);
@@ -151,7 +152,7 @@ public class ProductServlet extends HttpServlet {
                 }
                 return;
             }
-            //toggle trang thai tat - bat 
+
             if ("toggle".equals(action)) {
                 String productIdParam = request.getParameter("productId");
                 String isActiveParam = request.getParameter("isActive");

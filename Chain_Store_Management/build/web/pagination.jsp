@@ -1,9 +1,3 @@
-<%-- 
-    Document   : pagination
-    Created on : Jun 17, 2025, 1:15:40 PM
-    Author     : Admin
---%>
-
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
 
@@ -32,8 +26,12 @@
                 <li class="page-item">
                     <c:url var="prevUrl" value="${baseUrl}">
                         <c:param name="page" value="${currentPage - 1}"/>
-                        <c:param name="search" value="${search}"/>
-                        <c:param name="status" value="${status}"/>
+                        <c:if test="${not empty search}">
+                            <c:param name="search" value="${search}"/>
+                        </c:if>
+                        <c:if test="${not empty isActive}">
+                            <c:param name="isActive" value="${isActive}"/>
+                        </c:if>
                     </c:url>
                     <a class="page-link" href="${prevUrl}">Trước</a>
                 </li>
@@ -42,8 +40,12 @@
                 <li class="page-item ${i == currentPage ? 'active' : ''}">
                     <c:url var="pageUrl" value="${baseUrl}">
                         <c:param name="page" value="${i}"/>
-                        <c:param name="search" value="${search}"/>
-                        <c:param name="status" value="${status}"/>
+                        <c:if test="${not empty search}">
+                            <c:param name="search" value="${search}"/>
+                        </c:if>
+                        <c:if test="${not empty isActive}">
+                            <c:param name="isActive" value="${isActive}"/>
+                        </c:if>
                     </c:url>
                     <a class="page-link" href="${pageUrl}">${i}</a>
                 </li>
@@ -52,8 +54,12 @@
                 <li class="page-item">
                     <c:url var="nextUrl" value="${baseUrl}">
                         <c:param name="page" value="${currentPage + 1}"/>
-                        <c:param name="search" value="${search}"/>
-                        <c:param name="status" value="${status}"/>
+                        <c:if test="${not empty search}">
+                            <c:param name="search" value="${search}"/>
+                        </c:if>
+                        <c:if test="${not empty isActive}">
+                            <c:param name="isActive" value="${isActive}"/>
+                        </c:if>
                     </c:url>
                     <a class="page-link" href="${nextUrl}">Sau</a>
                 </li>
@@ -61,6 +67,3 @@
         </ul>
     </nav>
 </c:if>
-
- 
-
