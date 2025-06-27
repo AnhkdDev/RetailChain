@@ -163,7 +163,7 @@
                                         <div class="media">
                                             <div class="media-body">
                                                 <h5 class="notification-user">Low Stock Alert</h5>
-                                                Pipeline <p>Product XYZ is below minimum stock level.</p>
+                                                <p>Product XYZ is below minimum stock level.</p>
                                                 <span class="notification-time">2025-05-22 09:00</span>
                                             </div>
                                         </div>
@@ -380,7 +380,7 @@
                                                         </div>
                                                         <div class="dt-responsive table-responsive">
                                                             <div class="m-b-20">
-                                                                <button class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#storeModal" onclick="clearForm()">
+                                                                <button class="btn btn-primary waves-effect waves-light" data-toggle="modal" data-target="#storeModal">
                                                                     <i class="fa fa-plus"></i> Add New Store
                                                                 </button>
                                                             </div>
@@ -409,9 +409,9 @@
                                                                                     <td><c:out value="${store.phoneNumber}"/></td>
                                                                                     <td><c:out value="${store.active ? 'Active' : 'Inactive'}"/></td>
                                                                                     <td>
-                                                                                        <button class="btn btn-sm btn-info waves-effect waves-light" data-toggle="modal" data-target="#storeModal" onclick="populateForm(${store.storeID}, '${store.storeName}', '${store.address}', '${store.phoneNumber}', ${store.active})" title="Edit">
+                                                                                        <a href="stores?action=edit&storeID=${store.storeID}" class="btn btn-sm btn-info waves-effect waves-light" title="Edit">
                                                                                             <i class="fa fa-edit"></i>
-                                                                                        </button>
+                                                                                        </a>
                                                                                         <a href="stores?action=toggle&storeID=${store.storeID}" class="btn btn-sm btn-warning waves-effect waves-light" title="${store.active ? 'Deactivate' : 'Activate'}" onclick="return confirm('Are you sure you want to ${store.active ? 'deactivate' : 'activate'} this store?');">
                                                                                             <i class="fa ${store.active ? 'fa-unlock' : 'fa-lock'}"></i>
                                                                                         </a>
@@ -442,7 +442,7 @@
             <div class="modal-dialog" role="document">
                 <div class="modal-content">
                     <div class="modal-header">
-                        <h5 class="modal-title" id="storeModalLabel">Add Store</h5>
+                        <h5 class="modal-title" id="storeModalLabel">${empty editStore ? 'Add Store' : 'Edit Store'}</h5>
                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                             <span aria-hidden="true">×</span>
                         </button>
@@ -459,31 +459,31 @@
                         </c:if>
                         <form action="stores" method="post" id="storeForm">
                             <input type="hidden" name="action" value="save">
-                            <input type="hidden" id="storeId" name="storeID" value="${storeID}">
+                            <input type="hidden" id="storeId" name="storeID" value="${editStore.storeID != null ? editStore.storeID : store.storeID}">
                             <div class="form-group row">
                                 <label for="storeName" class="col-sm-3 col-form-label">Name</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storeName" name="storeName" placeholder="e.g., South Branch" value="${store.storeName}" required>
+                                    <input type="text" class="form-control" id="storeName" name="storeName" placeholder="e.g., South Branch" value="${editStore.storeName != null ? editStore.storeName : store.storeName}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storeAddress" class="col-sm-3 col-form-label">Address</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storeAddress" name="address" placeholder="e.g., 101 South Lane, City D" value="${store.address}" required>
+                                    <input type="text" class="form-control" id="storeAddress" name="address" placeholder="e.g., 101 South Lane, City D" value="${editStore.address != null ? editStore.address : store.address}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storePhone" class="col-sm-3 col-form-label">Phone</label>
                                 <div class="col-sm-9">
-                                    <input type="text" class="form-control" id="storePhone" name="phoneNumber" placeholder="e.g., (456) 789-0123" value="${store.phoneNumber}" required>
+                                    <input type="text" class="form-control" id="storePhone" name="phoneNumber" placeholder="e.g., (456) 789-0123" value="${editStore.phoneNumber != null ? editStore.phoneNumber : store.phoneNumber}" required>
                                 </div>
                             </div>
                             <div class="form-group row">
                                 <label for="storeStatus" class="col-sm-3 col-form-label">Status</label>
                                 <div class="col-sm-9">
                                     <select class="form-control" id="storeStatus" name="isActive" required>
-                                        <option value="true" ${store.active ? 'selected' : ''}>Active</option>
-                                        <option value="false" ${!store.active ? 'selected' : ''}>Inactive</option>
+                                        <option value="true" ${editStore.active || (!empty editStore && editStore.active) ? 'selected' : ''}>Active</option>
+                                        <option value="false" ${!editStore.active && !empty editStore ? 'selected' : ''}>Inactive</option>
                                     </select>
                                 </div>
                             </div>
@@ -510,22 +510,6 @@
         <script src="assets/js/vertical-layout.min.js"></script>
         <script type="text/javascript" src="assets/js/script.js"></script>
         <script>
-            function populateForm(id, name, address, phone, isActive) {
-                document.getElementById('storeId').value = id;
-                document.getElementById('storeName').value = name;
-                document.getElementById('storeAddress').value = address;
-                document.getElementById('storePhone').value = phone;
-                document.getElementById('storeStatus').value = isActive ? 'true' : 'false';
-                document.getElementById('storeModalLabel').textContent = 'Edit Store';
-            }
-            function clearForm() {
-                document.getElementById('storeId').value = '';
-                document.getElementById('storeName').value = '';
-                document.getElementById('storeAddress').value = '';
-                document.getElementById('storePhone').value = '';
-                document.getElementById('storeStatus').value = 'true';
-                document.getElementById('storeModalLabel').textContent = 'Add Store';
-            }
             document.querySelectorAll('.full-card').forEach(function(element) {
                 element.addEventListener('click', function() {
                     var card = this.closest('.table-card');
@@ -536,6 +520,12 @@
                     }
                 });
             });
+
+            <c:if test="${not empty editStore || not empty errors}">
+                $(document).ready(function() {
+                    $('#storeModal').modal('show');
+                });
+            </c:if>
         </script>
     </body>
 </html>

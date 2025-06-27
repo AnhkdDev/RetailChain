@@ -7,13 +7,15 @@ import java.sql.SQLException;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import model.Customer;
 import model.Invoice;
 import org.mindrot.jbcrypt.BCrypt;
 
 public class CustomerDAO {
 
+    private static final Logger LOGGER = Logger.getLogger(CustomerDAO.class.getName());
     private DBContext dbContext;
 
     public CustomerDAO() {
@@ -23,10 +25,17 @@ public class CustomerDAO {
     public DBContext getDBContext() {
         return dbContext;
     }
-    
+
+    // Normalize Vietnamese text by removing diacritics and converting to lowercase
+    private String normalizeVietnamese(String text) {
+        if (text == null) return "";
+        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
+        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+    }
+
     // Get all customers (with pagination support)
     public List<Customer> getAllCustomers() throws SQLException {
-        return searchCustomers(null, null, null, 1, Integer.MAX_VALUE);
+        return searchCustomers(null, null, null, 0, Integer.MAX_VALUE);
     }
 
     // Get customer by ID
@@ -58,6 +67,8 @@ public class CustomerDAO {
                     customer.setAddress(rs.getString("Address"));
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
+                    LOGGER.log(Level.INFO, "Retrieved customer: ID={0}, FullName={1}", 
+                               new Object[]{customer.getCustomerID(), customer.getFullName()});
                     return customer;
                 }
             }
@@ -99,15 +110,23 @@ public class CustomerDAO {
     }
 
     // Search customers with optional filters and pagination
-    public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel, int page, int pageSize) throws SQLException {
+    public List<Customer> searchCustomers(String keyword, String gender, String membershipLevel, int offset, int pageSize) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
-        if (page < 1) page = 1;
-        if (pageSize < 1) pageSize = 5;
+        if (offset < 0) {
+            LOGGER.log(Level.WARNING, "Negative offset provided: {0}, setting to 0", offset);
+            offset = 0;
+        }
+        if (pageSize < 1) {
+            LOGGER.log(Level.WARNING, "Invalid pageSize provided: {0}, setting to 3", pageSize);
+            pageSize = 3;
+        }
+
+        LOGGER.log(Level.INFO, "Executing searchCustomers with keyword: {0}, gender: {1}, membershipLevel: {2}, offset: {3}, pageSize: {4}", 
+                   new Object[]{keyword, gender, membershipLevel, offset, pageSize});
 
         List<Customer> customers = new ArrayList<>();
-        int offset = (page - 1) * pageSize;
         StringBuilder sql = new StringBuilder(
                 "SELECT c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, "
                 + "COALESCE(SUM(i.TotalAmount), 0) AS TotalSpent, lc.TierLevel AS MembershipLevel "
@@ -137,10 +156,31 @@ public class CustomerDAO {
             params.add(membershipLevel);
         }
 
+        // Apply keyword filter
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (keyword.length() > 100) {
+                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+            }
+            String normalizedKeyword = normalizeVietnamese(keyword);
+            String[] keywords = normalizedKeyword.trim().split("\\s+");
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append("(LOWER(c.FullName) LIKE ? OR LOWER(u.Email) LIKE ? OR LOWER(c.Phone) LIKE ?)");
+                params.add("%" + keywords[i] + "%");
+                params.add("%" + keywords[i] + "%");
+                params.add("%" + keywords[i] + "%");
+            }
+            sql.append(")");
+        }
+
         sql.append(" GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel ");
         sql.append(" ORDER BY c.CustomerID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add(offset);
         params.add(pageSize);
+
+        LOGGER.log(Level.INFO, "Executing SQL: {0}", sql.toString());
+        LOGGER.log(Level.INFO, "Parameters: {0}", params.toString());
 
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
@@ -160,28 +200,12 @@ public class CustomerDAO {
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
                     customers.add(customer);
+                    LOGGER.log(Level.INFO, "Found customer: ID={0}, FullName={1}", 
+                               new Object[]{customer.getCustomerID(), customer.getFullName()});
                 }
             }
         }
-
-        // Apply keyword filter in memory if keyword exists
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            if (keyword.length() > 100) {
-                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
-            }
-            final String normalizedKeyword = normalizeVietnamese(keyword);
-            customers = customers.stream()
-                    .filter(c -> {
-                        String fullName = c.getFullName() != null ? normalizeVietnamese(c.getFullName()) : "";
-                        String email = c.getEmail() != null ? normalizeVietnamese(c.getEmail()) : "";
-                        String phone = c.getPhone() != null ? normalizeVietnamese(c.getPhone()) : "";
-                        return fullName.contains(normalizedKeyword)
-                                || email.contains(normalizedKeyword)
-                                || phone.contains(normalizedKeyword);
-                    })
-                    .collect(Collectors.toList());
-        }
-
+        LOGGER.log(Level.INFO, "Returning {0} customers for keyword: {1}", new Object[]{customers.size(), keyword});
         return customers;
     }
 
@@ -190,9 +214,8 @@ public class CustomerDAO {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
-        List<Customer> customers = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT c.CustomerID, c.FullName, u.Email, c.Phone "
+                "SELECT COUNT(DISTINCT c.CustomerID) AS Total "
                 + "FROM Customers c "
                 + "INNER JOIN Users u ON c.UserID = u.UserID "
                 + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
@@ -200,6 +223,7 @@ public class CustomerDAO {
         );
         List<Object> params = new ArrayList<>();
 
+        // Apply gender filter
         if (gender != null && !gender.trim().isEmpty()) {
             if (!List.of("Male", "Female", "Other").contains(gender)) {
                 throw new IllegalArgumentException("Invalid gender value.");
@@ -208,6 +232,7 @@ public class CustomerDAO {
             params.add(gender);
         }
 
+        // Apply membership level filter
         if (membershipLevel != null && !membershipLevel.trim().isEmpty()) {
             if (!List.of("Bronze", "Silver", "Gold", "Platinum", "Diamond").contains(membershipLevel)) {
                 throw new IllegalArgumentException("Invalid membership level value.");
@@ -216,71 +241,38 @@ public class CustomerDAO {
             params.add(membershipLevel);
         }
 
+        // Apply keyword filter
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            if (keyword.length() > 100) {
+                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
+            }
+            String normalizedKeyword = normalizeVietnamese(keyword);
+            String[] keywords = normalizedKeyword.trim().split("\\s+");
+            sql.append(" AND (");
+            for (int i = 0; i < keywords.length; i++) {
+                if (i > 0) sql.append(" OR ");
+                sql.append("(LOWER(c.FullName) LIKE ? OR LOWER(u.Email) LIKE ? OR LOWER(c.Phone) LIKE ?)");
+                params.add("%" + keywords[i] + "%");
+                params.add("%" + keywords[i] + "%");
+                params.add("%" + keywords[i] + "%");
+            }
+            sql.append(")");
+        }
+
+        LOGGER.log(Level.INFO, "Executing SQL for count: {0}", sql.toString());
+        LOGGER.log(Level.INFO, "Parameters for count: {0}", params.toString());
+
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql.toString())) {
             for (int i = 0; i < params.size(); i++) {
                 stmt.setObject(i + 1, params.get(i));
             }
             try (ResultSet rs = stmt.executeQuery()) {
-                while (rs.next()) {
-                    Customer customer = new Customer();
-                    customer.setCustomerID(rs.getInt("CustomerID"));
-                    customer.setFullName(rs.getString("FullName"));
-                    customer.setEmail(rs.getString("Email"));
-                    customer.setPhone(rs.getString("Phone"));
-                    customers.add(customer);
+                if (rs.next()) {
+                    return rs.getInt("Total");
                 }
             }
         }
-
-        // Apply keyword filter in memory if keyword exists
-        if (keyword != null && !keyword.trim().isEmpty()) {
-            if (keyword.length() > 100) {
-                throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
-            }
-            final String normalizedKeyword = normalizeVietnamese(keyword);
-            customers = customers.stream()
-                    .filter(c -> {
-                        String fullName = c.getFullName() != null ? normalizeVietnamese(c.getFullName()) : "";
-                        String email = c.getEmail() != null ? normalizeVietnamese(c.getEmail()) : "";
-                        String phone = c.getPhone() != null ? normalizeVietnamese(c.getPhone()) : "";
-                        return fullName.contains(normalizedKeyword)
-                                || email.contains(normalizedKeyword)
-                                || phone.contains(normalizedKeyword);
-                    })
-                    .collect(Collectors.toList());
-        }
-
-        return customers.size();
-    }
-
-    // Normalize Vietnamese text by removing diacritics and converting to lowercase
-    private String normalizeVietnamese(String text) {
-        if (text == null) return "";
-        String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "").toLowerCase();
-    }
-
-    public void updateCustomer(Customer customer) throws SQLException {
-        if (dbContext.getConnection() == null) {
-            throw new SQLException("Database connection is not established.");
-        }
-        String sqlCustomers = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, BirthDate = ?, Address = ? WHERE CustomerID = ? AND IsActive = 1";
-        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlCustomers)) {
-            stmt.setString(1, customer.getFullName());
-            stmt.setString(2, customer.getPhone());
-            stmt.setString(3, customer.getGender());
-            stmt.setDate(4, customer.getBirthDate());
-            stmt.setString(5, customer.getAddress());
-            stmt.setInt(6, customer.getCustomerID());
-            stmt.executeUpdate();
-        }
-
-        String sqlUsers = "UPDATE Users SET Email = ? WHERE UserID = (SELECT UserID FROM Customers WHERE CustomerID = ? AND IsActive = 1)";
-        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlUsers)) {
-            stmt.setString(1, customer.getEmail());
-            stmt.setInt(2, customer.getCustomerID());
-            stmt.executeUpdate();
-        }
+        return 0;
     }
 
     public void insertCustomer(Customer customer) throws SQLException {
@@ -318,7 +310,28 @@ public class CustomerDAO {
         }
     }
 
-   
+    public void updateCustomer(Customer customer) throws SQLException {
+        if (dbContext.getConnection() == null) {
+            throw new SQLException("Database connection is not established.");
+        }
+        String sqlCustomers = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, BirthDate = ?, Address = ? WHERE CustomerID = ? AND IsActive = 1";
+        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlCustomers)) {
+            stmt.setString(1, customer.getFullName());
+            stmt.setString(2, customer.getPhone());
+            stmt.setString(3, customer.getGender());
+            stmt.setDate(4, customer.getBirthDate());
+            stmt.setString(5, customer.getAddress());
+            stmt.setInt(6, customer.getCustomerID());
+            stmt.executeUpdate();
+        }
+
+        String sqlUsers = "UPDATE Users SET Email = ? WHERE UserID = (SELECT UserID FROM Customers WHERE CustomerID = ? AND IsActive = 1)";
+        try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlUsers)) {
+            stmt.setString(1, customer.getEmail());
+            stmt.setInt(2, customer.getCustomerID());
+            stmt.executeUpdate();
+        }
+    }
 
     public void deleteCustomer(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {

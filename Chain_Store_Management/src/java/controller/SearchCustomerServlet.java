@@ -20,11 +20,12 @@ import model.Customer;
 @WebServlet(name = "SearchCustomerServlet", urlPatterns = {"/SearchCustomerServlet"})
 public class SearchCustomerServlet extends HttpServlet {
 
-    private static final int RECORDS_PER_PAGE = 4;
+    private static final int RECORDS_PER_PAGE = 3;
     private static final Logger LOGGER = Logger.getLogger(SearchCustomerServlet.class.getName());
 
     private String cleanSearchKeyword(String keyword) {
         if (keyword == null || keyword.trim().isEmpty()) {
+            LOGGER.log(Level.INFO, "Search keyword is null or empty");
             return null;
         }
         String normalizedKeyword = normalizeVietnamese(keyword);
@@ -33,19 +34,25 @@ public class SearchCustomerServlet extends HttpServlet {
         for (String word : words) {
             if (isValidWord(word)) {
                 cleanedWords.add(word);
+            } else {
+                LOGGER.log(Level.WARNING, "Invalid word filtered out: {0}", word);
             }
         }
-        return cleanedWords.isEmpty() ? null : String.join(" ", cleanedWords);
+        if (cleanedWords.isEmpty()) {
+            LOGGER.log(Level.WARNING, "No valid words in search keyword: {0}", keyword);
+            return null;
+        }
+        String result = String.join(" ", cleanedWords);
+        LOGGER.log(Level.INFO, "Original keyword: {0}, Cleaned: {1}", new Object[]{keyword, result});
+        return result;
     }
 
     private boolean isValidWord(String word) {
-        if (word == null || word.length() < 2) {
+        if (word == null) {
             return false;
         }
-        if (word.matches("^(.)\\1+$")) {
-            return false;
-        }
-        return word.matches("[a-z0-9@.]+");
+        // Cho phép chữ in hoa, số, và các ký tự phổ biến
+        return word.matches("[a-zA-Z0-9@._-]+");
     }
 
     private String normalizeVietnamese(String text) {
@@ -63,17 +70,21 @@ public class SearchCustomerServlet extends HttpServlet {
 
         CustomerDAO customerDAO = new CustomerDAO();
         try {
+            String action = request.getParameter("action");
             String search = request.getParameter("search");
-            String cleanedSearch = null;
-            if (search != null) {
-                if (search.length() > 100) {
-                    throw new IllegalArgumentException("Search term exceeds 100 characters.");
-                }
-                cleanedSearch = cleanSearchKeyword(search);
-            }
+            String cleanedSearch = cleanSearchKeyword(search);
             String gender = request.getParameter("gender");
             String membershipLevel = request.getParameter("membershipLevel");
             String reset = request.getParameter("reset");
+
+            LOGGER.log(Level.INFO, "Processing request with action: {0}, search: {1}, cleanedSearch: {2}, gender: {3}, membershipLevel: {4}, reset: {5}", 
+                       new Object[]{action, search, cleanedSearch, gender, membershipLevel, reset});
+
+            // Thông báo nếu từ khóa không hợp lệ
+            if (search != null && !search.trim().isEmpty() && cleanedSearch == null) {
+                request.setAttribute("message", "Từ khóa tìm kiếm không hợp lệ.");
+                request.setAttribute("messageType", "warning");
+            }
 
             if ("true".equals(reset)) {
                 search = null;
@@ -82,32 +93,104 @@ public class SearchCustomerServlet extends HttpServlet {
                 membershipLevel = null;
             }
 
-            int currentPage = 1;
-            String pageParam = request.getParameter("page");
-            if (pageParam != null) {
-                try {
-                    currentPage = Integer.parseInt(pageParam);
-                    if (currentPage < 1) {
-                        currentPage = 1;
+            // Handle add customer
+            if ("addCustomer".equals(action)) {
+                int currentPage = getCurrentPage(request);
+                int offset = (currentPage - 1) * RECORDS_PER_PAGE;
+                LOGGER.log(Level.INFO, "Action: addCustomer, Current page: {0}, Offset: {1}", new Object[]{currentPage, offset});
+
+                List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
+                int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
+                int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+
+                setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
+                request.getRequestDispatcher("customers.jsp").forward(request, response);
+                return;
+            }
+
+            // Handle view details
+            if ("viewDetails".equals(action)) {
+                String customerIdParam = request.getParameter("customerID");
+                if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
+                    try {
+                        int customerID = Integer.parseInt(customerIdParam);
+                        Customer customer = customerDAO.getCustomerById(customerID);
+                        if (customer != null) {
+                            request.setAttribute("customerDetails", customer);
+                            int currentPage = getCurrentPage(request);
+                            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
+                            LOGGER.log(Level.INFO, "Action: viewDetails, CustomerID: {0}, Current page: {1}, Offset: {2}", 
+                                       new Object[]{customerID, currentPage, offset});
+
+                            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
+                            int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
+                            int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+
+                            setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
+                            request.getRequestDispatcher("customers.jsp").forward(request, response);
+                            return;
+                        } else {
+                            request.setAttribute("message", "Customer not found.");
+                            request.setAttribute("messageType", "danger");
+                        }
+                    } catch (NumberFormatException e) {
+                        LOGGER.log(Level.WARNING, "Invalid customer ID: {0}", customerIdParam);
+                        request.setAttribute("message", "Invalid customer ID.");
+                        request.setAttribute("messageType", "danger");
                     }
-                } catch (NumberFormatException e) {
-                    LOGGER.log(Level.WARNING, "Invalid page parameter: {0}", pageParam);
-                    currentPage = 1;
+                } else {
+                    request.setAttribute("message", "Customer ID is required.");
+                    request.setAttribute("messageType", "danger");
                 }
             }
 
-            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, currentPage, RECORDS_PER_PAGE);
+            // Handle edit customer
+            if ("editCustomer".equals(action)) {
+                String customerIdParam = request.getParameter("customerID");
+                if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
+                    try {
+                        int customerID = Integer.parseInt(customerIdParam);
+                        Customer customer = customerDAO.getCustomerById(customerID);
+                        if (customer != null) {
+                            request.setAttribute("editCustomer", customer);
+                            int currentPage = getCurrentPage(request);
+                            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
+                            LOGGER.log(Level.INFO, "Action: editCustomer, CustomerID: {0}, Current page: {1}, Offset: {2}", 
+                                       new Object[]{customerID, currentPage, offset});
+
+                            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
+                            int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
+                            int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
+
+                            setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
+                            request.getRequestDispatcher("customers.jsp").forward(request, response);
+                            return;
+                        } else {
+                            request.setAttribute("message", "Customer not found.");
+                            request.setAttribute("messageType", "danger");
+                        }
+                    } catch (NumberFormatException e) {
+                        LOGGER.log(Level.WARNING, "Invalid customer ID: {0}", customerIdParam);
+                        request.setAttribute("message", "Invalid customer ID.");
+                        request.setAttribute("messageType", "danger");
+                    }
+                } else {
+                    request.setAttribute("message", "Customer ID is required.");
+                    request.setAttribute("messageType", "danger");
+                }
+            }
+
+            // Default: Load customer list
+            int currentPage = getCurrentPage(request);
+            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
+            LOGGER.log(Level.INFO, "Default action, Current page: {0}, Offset: {1}", new Object[]{currentPage, offset});
+
+            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
+            LOGGER.log(Level.INFO, "Found {0} customers for keyword: {1}", new Object[]{customers.size(), cleanedSearch});
             int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
             int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
 
-            request.setAttribute("customers", customers);
-            request.setAttribute("currentPage", currentPage);
-            request.setAttribute("totalPages", totalPages);
-            request.setAttribute("search", search != null ? search : "");
-            request.setAttribute("gender", gender != null ? gender : "");
-            request.setAttribute("membershipLevel", membershipLevel != null ? membershipLevel : "");
-            request.setAttribute("baseUrl", "SearchCustomerServlet");
-
+            setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
             request.getRequestDispatcher("customers.jsp").forward(request, response);
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Database error while loading customers", e);
@@ -130,6 +213,35 @@ public class SearchCustomerServlet extends HttpServlet {
                 customerDAO.getDBContext().closeConnection();
             }
         }
+    }
+
+    private int getCurrentPage(HttpServletRequest request) {
+        int currentPage = 1;
+        String pageParam = request.getParameter("page");
+        if (pageParam != null && !pageParam.trim().isEmpty()) {
+            try {
+                currentPage = Integer.parseInt(pageParam);
+                if (currentPage < 1) {
+                    currentPage = 1;
+                    LOGGER.log(Level.INFO, "Page parameter was negative or zero ({0}), defaulting to 1", pageParam);
+                }
+            } catch (NumberFormatException e) {
+                LOGGER.log(Level.WARNING, "Invalid page parameter: {0}, defaulting to 1", pageParam);
+                currentPage = 1;
+            }
+        }
+        return currentPage;
+    }
+
+    private void setRequestAttributes(HttpServletRequest request, List<Customer> customers, int currentPage, int totalPages, 
+                                     String search, String gender, String membershipLevel) {
+        request.setAttribute("customers", customers);
+        request.setAttribute("currentPage", currentPage);
+        request.setAttribute("totalPages", totalPages);
+        request.setAttribute("search", search != null ? search : "");
+        request.setAttribute("gender", gender != null ? gender : "");
+        request.setAttribute("membershipLevel", membershipLevel != null ? membershipLevel : "");
+        request.setAttribute("baseUrl", "SearchCustomerServlet");
     }
 
     @Override

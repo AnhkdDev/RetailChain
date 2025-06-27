@@ -29,8 +29,8 @@
                         <c:if test="${not empty search}">
                             <c:param name="search" value="${search}"/>
                         </c:if>
-                        <c:if test="${not empty isActive}">
-                            <c:param name="isActive" value="${isActive}"/>
+                        <c:if test="${not empty statusFilter}">
+                            <c:param name="statusFilter" value="${statusFilter}"/>
                         </c:if>
                     </c:url>
                     <a class="page-link" href="${prevUrl}">Trước</a>
@@ -43,8 +43,8 @@
                         <c:if test="${not empty search}">
                             <c:param name="search" value="${search}"/>
                         </c:if>
-                        <c:if test="${not empty isActive}">
-                            <c:param name="isActive" value="${isActive}"/>
+                        <c:if test="${not empty statusFilter}">
+                            <c:param name="statusFilter" value="${statusFilter}"/>
                         </c:if>
                     </c:url>
                     <a class="page-link" href="${pageUrl}">${i}</a>
@@ -57,13 +57,13 @@
                         <c:if test="${not empty search}">
                             <c:param name="search" value="${search}"/>
                         </c:if>
-                        <c:if test="${not empty isActive}">
-                            <c:param name="isActive" value="${isActive}"/>
+                        <c:if test="${not empty statusFilter}">
+                            <c:param name="statusFilter" value="${statusFilter}"/>
                         </c:if>
                     </c:url>
                     <a class="page-link" href="${nextUrl}">Sau</a>
                 </li>
             </c:if>
         </ul>
-    </nav>
+    </nav> 
 </c:if>

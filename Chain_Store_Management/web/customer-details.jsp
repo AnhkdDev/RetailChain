@@ -61,7 +61,7 @@
                                         <p><strong>Email:</strong> <c:out value="${customer.email}"/></p>
                                         <p><strong>Gender:</strong> <c:out value="${customer.gender}"/></p>
                                         <p><strong>Birth Date:</strong> <fmt:formatDate value="${customer.birthDate}" pattern="dd-MM-yyyy"/></p>
-                                        <p><strong>Membership Level:</strong> <c:out value="${customer.membershipLevel}"/></p>
+                                     
                                         <p><strong>Address:</strong> <c:out value="${customer.address}"/></p>
                                     </div>
                                 </div>-->

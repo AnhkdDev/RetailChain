@@ -251,16 +251,7 @@
                                                                             <option value="Other" ${gender == 'Other' ? 'selected' : ''}>Other</option>
                                                                         </select>
                                                                     </div>
-                                                                    <div class="form-group">
-                                                                        <select class="form-control" name="membershipLevel">
-                                                                            <option value="">All Membership Levels</option>
-                                                                            <option value="Bronze" ${membershipLevel == 'Bronze' ? 'selected' : ''}>Bronze</option>
-                                                                            <option value="Silver" ${membershipLevel == 'Silver' ? 'selected' : ''}>Silver</option>
-                                                                            <option value="Gold" ${membershipLevel == 'Gold' ? 'selected' : ''}>Gold</option>
-                                                                            <option value="Platinum" ${membershipLevel == 'Platinum' ? 'selected' : ''}>Platinum</option>
-                                                                            <option value="Diamond" ${membershipLevel == 'Diamond' ? 'selected' : ''}>Diamond</option>
-                                                                        </select>
-                                                                    </div>
+                                                                   
                                                                     <button type="submit" class="btn btn-primary waves-effect waves-light">
                                                                         <i class="fa fa-filter"></i> Search
                                                                     </button>
@@ -268,9 +259,9 @@
                                                                         <i class="fa fa-list"></i> All
                                                                     </a>
                                                                 </form>
-                                                                <button class="btn btn-primary waves-effect waves-light mt-2" data-toggle="modal" data-target="#customerModal" onclick="clearForm()">
+                                                                <a href="SearchCustomerServlet?action=addCustomer" class="btn btn-primary waves-effect waves-light mt-2">
                                                                     <i class="fa fa-plus"></i> Add Customer
-                                                                </button>
+                                                                </a>
                                                             </div>
                                                             <div class="dt-responsive table-responsive">
                                                                 <c:choose>
@@ -281,7 +272,6 @@
                                                                         <table class="table table-hover">
                                                                             <thead>
                                                                                 <tr>
-                                                                                    
                                                                                     <th>Full Name</th>
                                                                                     <th>Phone</th>
                                                                                     <th>Email</th>
@@ -296,7 +286,6 @@
                                                                             <tbody>
                                                                                 <c:forEach var="customer" items="${customers}">
                                                                                     <tr>
-                                                                                      
                                                                                         <td><c:out value="${customer.fullName}"/></td>
                                                                                         <td><c:out value="${customer.phone}"/></td>
                                                                                         <td><c:out value="${customer.email}"/></td>
@@ -306,9 +295,9 @@
                                                                                         <td><fmt:formatNumber value="${customer.totalSpent}" type="currency" currencyCode="VND"/></td>
                                                                                         <td><fmt:formatDate value="${customer.createdAt}" pattern="dd-MM-yyyy HH:mm"/></td>
                                                                                         <td>
-                                                                                            <button class="btn btn-sm btn-info waves-effect waves-light" data-toggle="modal" data-target="#customerDetailsModal" onclick="populateDetails('<c:out value="${customer.customerID}"/>', '<c:out value="${customer.fullName}"/>', '<c:out value="${customer.phone}"/>', '<c:out value="${customer.email}"/>', '<c:out value="${customer.gender}"/>', '<fmt:formatDate value="${customer.birthDate}" pattern="dd-MM-yyyy"/>', '<c:out value="${customer.address}"/>', ${customer.totalSpent}, '<fmt:formatDate value="${customer.createdAt}" pattern="dd-MM-yyyy HH:mm"/>')" title="View Details">
+                                                                                            <a href="SearchCustomerServlet?action=viewDetails&customerID=<c:out value="${customer.customerID}"/>" class="btn btn-sm btn-info waves-effect waves-light" title="View Details">
                                                                                                 <i class="fa fa-eye"></i>
-                                                                                            </button>
+                                                                                            </a>
                                                                                            
                                                                                             <a href="SearchCustomerServlet?action=delete&customerID=<c:out value="${customer.customerID}"/>" class="btn btn-sm btn-danger waves-effect waves-light" onclick="return confirm('Are you sure you want to delete this customer?');" title="Delete Customer">
                                                                                                 <i class="fa fa-trash"></i>
@@ -334,9 +323,78 @@
                     </div>
                 </div>
             </div>
-           <!-- add customer -->
-           
-           
+            <!-- Add/Edit Customer Modal -->
+            <div class="modal fade" id="customerModal" tabindex="-1" role="dialog" aria-labelledby="customerModalLabel" aria-hidden="true">
+                <div class="modal-dialog" role="document">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="customerModalLabel">${editCustomer != null ? 'Edit Customer' : 'Add Customer'}</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">×</span>
+                            </button>
+                        </div>
+                        <form action="SearchCustomerServlet" method="POST">
+                            <div class="modal-body">
+                                <input type="hidden" name="action" value="save">
+                                <input type="hidden" name="customerID" id="customerId" value="${editCustomer != null ? editCustomer.customerID : ''}">
+                                <div class="form-group row">
+                                    <label for="fullName" class="col-sm-3 col-form-label">Full Name</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="fullName" name="fullName" value="${editCustomer != null ? editCustomer.fullName : ''}" required maxlength="100">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="phone" class="col-sm-3 col-form-label">Phone</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="phone" name="phone" value="${editCustomer != null ? editCustomer.phone : ''}" required pattern="\d{10}">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="email" class="col-sm-3 col-form-label">Email</label>
+                                    <div class="col-sm-9">
+                                        <input type="email" class="form-control" id="email" name="email" value="${editCustomer != null ? editCustomer.email : ''}" required>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="gender" class="col-sm-3 col-form-label">Gender</label>
+                                    <div class="col-sm-9">
+                                        <select class="form-control" id="gender" name="gender" required>
+                                            <option value="Male" ${editCustomer != null && editCustomer.gender == 'Male' ? 'selected' : ''}>Male</option>
+                                            <option value="Female" ${editCustomer != null && editCustomer.gender == 'Female' ? 'selected' : ''}>Female</option>
+                                            <option value="Other" ${editCustomer != null && editCustomer.gender == 'Other' ? 'selected' : ''}>Other</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="birthDate" class="col-sm-3 col-form-label">Birth Date</label>
+                                    <div class="col-sm-9">
+                                        <input type="date" class="form-control" id="birthDate" name="birthDate" value="${editCustomer != null ? editCustomer.birthDate : ''}" required>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="address" class="col-sm-3 col-form-label">Address</label>
+                                    <div class="col-sm-9">
+                                        <input type="text" class="form-control" id="address" name="address" value="${editCustomer != null ? editCustomer.address : ''}" required maxlength="255">
+                                    </div>
+                                </div>
+                                <c:if test="${editCustomer == null}">
+                                    <div class="form-group row" id="passwordGroup">
+                                        <label for="password" class="col-sm-3 col-form-label">Password</label>
+                                        <div class="col-sm-9">
+                                            <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                                        </div>
+                                    </div>
+                                </c:if>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                                <button type="submit" class="btn btn-primary">Save</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <!-- Customer Details Modal -->
             <div class="modal fade" id="customerDetailsModal" tabindex="-1" role="dialog" aria-labelledby="customerDetailsModalLabel" aria-hidden="true">
                 <div class="modal-dialog" role="document">
                     <div class="modal-content">
@@ -347,42 +405,45 @@
                             </button>
                         </div>
                         <div class="modal-body">
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Customer ID</label>
-                                <div class="col-sm-9 detail-value" id="detailCustomerId"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Full Name</label>
-                                <div class="col-sm-9 detail-value" id="detailFullName"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Phone</label>
-                                <div class="col-sm-9 detail-value" id="detailPhone"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Email</label>
-                                <div class="col-sm-9 detail-value" id="detailEmail"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Gender</label>
-                                <div class="col-sm-9 detail-value" id="detailGender"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Birth Date</label>
-                                <div class="col-sm-9 detail-value" id="detailBirthDate"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Address</label>
-                                <div class="col-sm-9 detail-value" id="detailAddress"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Total Spent</label>
-                                <div class="col-sm-9 detail-value" id="detailTotalSpent"></div>
-                            </div>
-                            <div class="form-group row">
-                                <label class="col-sm-3 detail-label">Created At</label>
-                                <div class="col-sm-9 detail-value" id="detailCreatedAt"></div>
-                            </div>
+                            <c:if test="${customerDetails != null}">
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Customer ID</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.customerID}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Full Name</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.fullName}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Phone</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.phone}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Email</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.email}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Gender</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.gender}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Birth Date</label>
+                                    <div class="col-sm-9 detail-value"><fmt:formatDate value="${customerDetails.birthDate}" pattern="dd-MM-yyyy"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Address</label>
+                                    <div class="col-sm-9 detail-value"><c:out value="${customerDetails.address}"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Total Spent</label>
+                                    <div class="col-sm-9 detail-value"><fmt:formatNumber value="${customerDetails.totalSpent}" type="currency" currencyCode="VND"/></div>
+                                </div>
+                                <div class="form-group row">
+                                    <label class="col-sm-3 detail-label">Created At</label>
+                                    <div class="col-sm-9 detail-value"><fmt:formatDate value="${customerDetails.createdAt}" pattern="dd-MM-yyyy HH:mm"/></div>
+                                </div>
+                                
+                            </c:if>
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
@@ -403,40 +464,7 @@
             <script src="assets/js/vertical-layout.min.js"></script>
             <script type="text/javascript" src="assets/js/script.js"></script>
             <script>
-                function populateForm(id, fullName, phone, email, gender, birthDate, address) {
-                    document.getElementById('customerId').value = id;
-                    document.getElementById('fullName').value = fullName;
-                    document.getElementById('phone').value = phone;
-                    document.getElementById('email').value = email;
-                    document.getElementById('gender').value = gender;
-                    document.getElementById('birthDate').value = birthDate;
-                    document.getElementById('address').value = address;
-                    document.getElementById('customerModalLabel').textContent = 'Edit Customer';
-                    document.getElementById('passwordGroup').style.display = 'none';
-                }
-                function clearForm() {
-                    document.getElementById('customerId').value = '';
-                    document.getElementById('fullName').value = '';
-                    document.getElementById('phone').value = '';
-                    document.getElementById('email').value = '';
-                    document.getElementById('gender').value = 'Male';
-                    document.getElementById('birthDate').value = '';
-                    document.getElementById('address').value = '';
-                    document.getElementById('password').value = '';
-                    document.getElementById('customerModalLabel').textContent = 'Add Customer';
-                    document.getElementById('passwordGroup').style.display = 'block';
-                }
-                function populateDetails(id, fullName, phone, email, gender, birthDate, address, totalSpent, createdAt) {
-                    document.getElementById('detailCustomerId').textContent = id;
-                    document.getElementById('detailFullName').textContent = fullName;
-                    document.getElementById('detailPhone').textContent = phone;
-                    document.getElementById('detailEmail').textContent = email;
-                    document.getElementById('detailGender').textContent = gender;
-                    document.getElementById('detailBirthDate').textContent = birthDate;
-                    document.getElementById('detailAddress').textContent = address;
-                    document.getElementById('detailTotalSpent').textContent = new Intl.NumberFormat('vi-VN', {style: 'currency', currency: 'VND'}).format(totalSpent);
-                    document.getElementById('detailCreatedAt').textContent = createdAt;
-                }
+                // Handle fullscreen card toggle
                 document.querySelectorAll('.full-card').forEach(function (element) {
                     element.addEventListener('click', function () {
                         var card = this.closest('.table-card');
@@ -447,6 +475,12 @@
                         }
                     });
                 });
+                // Show modals if needed
+                <c:if test="${editCustomer != null || customerDetails != null}">
+                    $(document).ready(function() {
+                        $('#${editCustomer != null ? 'customerModal' : 'customerDetailsModal'}').modal('show');
+                    });
+                </c:if>
             </script>
         </body>
     </html>

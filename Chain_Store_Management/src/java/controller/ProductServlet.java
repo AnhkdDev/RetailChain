@@ -49,10 +49,12 @@ public class ProductServlet extends HttpServlet {
                 LOGGER.info("Cleared tempImageBytes for productId: " + productId);
             }
 
+            // Xử lý tham số tìm kiếm
             String search = cleanSearchKeyword(request.getParameter("search"));
             String message = request.getParameter("message");
             String messageType = request.getParameter("messageType");
 
+            // Xử lý bộ lọc danh mục (nếu có)
             Integer categoryID = null;
             String categoryIDParam = request.getParameter("categoryID");
             if (categoryIDParam != null && !categoryIDParam.isEmpty()) {
@@ -64,12 +66,18 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
+            // Xử lý bộ lọc trạng thái
             Boolean isActive = null;
-            String isActiveParam = request.getParameter("isActive");
-            if (isActiveParam != null && !isActiveParam.isEmpty()) {
-                isActive = Boolean.parseBoolean(isActiveParam);
+            String statusFilter = request.getParameter("statusFilter");
+            if (statusFilter != null && !statusFilter.isEmpty()) {
+                if ("active".equals(statusFilter)) {
+                    isActive = true;
+                } else if ("inactive".equals(statusFilter)) {
+                    isActive = false;
+                }
             }
 
+            // Xử lý phân trang
             int currentPage = 1;
             String pageParam = request.getParameter("page");
             if (pageParam != null && !pageParam.isEmpty()) {
@@ -81,26 +89,30 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
+            // Lấy danh sách sản phẩm và tổng số sản phẩm
             List<Product> products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
             int totalProducts = productDAO.getTotalProductCount(search, categoryID, isActive);
             int totalPages = (int) Math.ceil((double) totalProducts / PAGE_SIZE);
 
+            // Điều chỉnh currentPage nếu vượt quá totalPages
             if (currentPage > totalPages && totalPages > 0) {
                 currentPage = totalPages;
                 products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
             }
 
+            // Lấy dữ liệu cho dropdown
             List<Size> sizeSuggestions = productDAO.getSizes();
             List<Color> colorSuggestions = productDAO.getColors();
             List<Category> categories = productDAO.getCategories();
 
+            // Đặt các thuộc tính cho JSP
             request.setAttribute("products", products != null ? products : new ArrayList<>());
             request.setAttribute("categories", categories);
             request.setAttribute("sizeSuggestions", sizeSuggestions);
             request.setAttribute("colorSuggestions", colorSuggestions);
             request.setAttribute("search", search != null ? search : "");
             request.setAttribute("categoryID", categoryID != null ? categoryID : "");
-            request.setAttribute("isActive", isActive != null ? isActive : "");
+            request.setAttribute("statusFilter", statusFilter != null ? statusFilter : "");
             request.setAttribute("currentPage", currentPage);
             request.setAttribute("totalPages", totalPages);
             request.setAttribute("totalProducts", totalProducts);

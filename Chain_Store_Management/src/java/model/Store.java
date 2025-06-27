@@ -4,21 +4,24 @@ public class Store {
     private String storeID;
     private String storeName;
     private String address;
-    private String phoneNumber; // Matches JSP, but maps to database column 'phone'
+    private String phoneNumber;
     private String email;
-    private boolean isActive;
+    private boolean active;
 
+    // Default constructor
     public Store() {
     }
 
-    public Store(String storeName, String address, String phoneNumber, String email, boolean isActive) {
+    // Constructor for creating a store with minimal fields
+    public Store(String storeName, String address, String phoneNumber, String email, boolean active) {
         this.storeName = storeName;
         this.address = address;
         this.phoneNumber = phoneNumber;
         this.email = email;
-        this.isActive = isActive;
+        this.active = active;
     }
 
+    // Getters and setters
     public String getStoreID() {
         return storeID;
     }
@@ -60,10 +63,22 @@ public class Store {
     }
 
     public boolean isActive() {
-        return isActive;
+        return active;
     }
 
-    public void setActive(boolean isActive) {
-        this.isActive = isActive;
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
+    @Override
+    public String toString() {
+        return "Store{" +
+               "storeID='" + storeID + '\'' +
+               ", storeName='" + storeName + '\'' +
+               ", address='" + address + '\'' +
+               ", phoneNumber='" + phoneNumber + '\'' +
+               ", email='" + email + '\'' +
+               ", active=" + active +
+               '}';
     }
 }
