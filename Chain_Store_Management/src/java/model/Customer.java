@@ -3,20 +3,25 @@ package model;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+/**
+ * Represents a customer in the Shop database.
+ * Matches the structure of the Customers table and includes additional fields for display purposes.
+ * @author Admin
+ */
 public class Customer {
-
-    private int customerID;
-    private String fullName;
-    private String phone;
-    private String email;
-    private String gender;
-    private Date birthDate;
-    private Timestamp createdAt;
+    private int customerID; 
+    private String fullName; 
+    private String phone; 
     private String address;
-    private double totalSpent;
+    private String gender; 
+    private Date birthDate; 
+    private Timestamp createdAt; 
+    private boolean isActive;
+    private int userId; 
+    private String img;
+    private String gmail; 
+    private double totalSpent; 
     private String membershipLevel;
-    private String password; // Only used for insert
-    private int userID; // To link with Users table
 
     // Getters and Setters
     public int getCustomerID() {
@@ -43,12 +48,12 @@ public class Customer {
         this.phone = phone;
     }
 
-    public String getEmail() {
-        return email;
+    public String getAddress() {
+        return address;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setAddress(String address) {
+        this.address = address;
     }
 
     public String getGender() {
@@ -75,12 +80,36 @@ public class Customer {
         this.createdAt = createdAt;
     }
 
-    public String getAddress() {
-        return address;
+    public boolean isActive() {
+        return isActive;
     }
 
-    public void setAddress(String address) {
-        this.address = address;
+    public void setActive(boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
+    }
+
+    public String getImg() {
+        return img;
+    }
+
+    public void setImg(String img) {
+        this.img = img;
+    }
+
+    public String getGmail() {
+        return gmail;
+    }
+
+    public void setGmail(String gmail) {
+        this.gmail = gmail;
     }
 
     public double getTotalSpent() {
@@ -97,21 +126,5 @@ public class Customer {
 
     public void setMembershipLevel(String membershipLevel) {
         this.membershipLevel = membershipLevel;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    public int getUserID() {
-        return userID;
-    }
-
-    public void setUserID(int userID) {
-        this.userID = userID;
     }
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import model.Customer;
 import model.Invoice;
 import org.mindrot.jbcrypt.BCrypt;
@@ -30,7 +31,7 @@ public class CustomerDAO {
     private String normalizeVietnamese(String text) {
         if (text == null) return "";
         String normalized = Normalizer.normalize(text, Normalizer.Form.NFD);
-        return normalized.replaceAll("\\p{M}", "").toLowerCase();
+        return normalized.replaceAll("\\p{M}", "").toLowerCase().trim();
     }
 
     // Get all customers (with pagination support)
@@ -43,14 +44,13 @@ public class CustomerDAO {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
-        String sql = "SELECT c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, "
+        String sql = "SELECT c.CustomerID, c.FullName, c.FullNameNormalized, c.Phone, c.Gmail, c.Gender, c.BirthDate, c.CreatedAt, c.Address, c.IsActive, c.UserID, c.img, "
                 + "COALESCE(SUM(i.TotalAmount), 0) AS TotalSpent, lc.TierLevel AS MembershipLevel "
                 + "FROM Customers c "
-                + "INNER JOIN Users u ON c.UserID = u.UserID "
                 + "LEFT JOIN Invoices i ON c.CustomerID = i.CustomerID "
                 + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
                 + "WHERE c.CustomerID = ? AND c.IsActive = 1 "
-                + "GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel";
+                + "GROUP BY c.CustomerID, c.FullName, c.FullNameNormalized, c.Phone, c.Gmail, c.Gender, c.BirthDate, c.CreatedAt, c.Address, c.IsActive, c.UserID, c.img, lc.TierLevel";
 
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sql)) {
             stmt.setInt(1, customerID);
@@ -60,15 +60,18 @@ public class CustomerDAO {
                     customer.setCustomerID(rs.getInt("CustomerID"));
                     customer.setFullName(rs.getString("FullName"));
                     customer.setPhone(rs.getString("Phone"));
-                    customer.setEmail(rs.getString("Email"));
+                    customer.setGmail(rs.getString("Gmail"));
                     customer.setGender(rs.getString("Gender"));
                     customer.setBirthDate(rs.getDate("BirthDate"));
                     customer.setCreatedAt(rs.getTimestamp("CreatedAt"));
                     customer.setAddress(rs.getString("Address"));
+                    customer.setActive(rs.getBoolean("IsActive"));
+                    customer.setUserId(rs.getInt("UserID"));
+                    customer.setImg(rs.getString("img"));
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
-                    LOGGER.log(Level.INFO, "Retrieved customer: ID={0}, FullName={1}", 
-                               new Object[]{customer.getCustomerID(), customer.getFullName()});
+                    LOGGER.log(Level.INFO, "Retrieved customer: ID={0}, FullName={1}, Normalized FullName={2}", 
+                               new Object[]{customer.getCustomerID(), customer.getFullName(), rs.getString("FullNameNormalized")});
                     return customer;
                 }
             }
@@ -128,10 +131,9 @@ public class CustomerDAO {
 
         List<Customer> customers = new ArrayList<>();
         StringBuilder sql = new StringBuilder(
-                "SELECT c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, "
+                "SELECT c.CustomerID, c.FullName, c.FullNameNormalized, c.Phone, c.Gmail, c.Gender, c.BirthDate, c.CreatedAt, c.Address, c.IsActive, c.UserID, c.img, "
                 + "COALESCE(SUM(i.TotalAmount), 0) AS TotalSpent, lc.TierLevel AS MembershipLevel "
                 + "FROM Customers c "
-                + "INNER JOIN Users u ON c.UserID = u.UserID "
                 + "LEFT JOIN Invoices i ON c.CustomerID = i.CustomerID "
                 + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
                 + "WHERE c.IsActive = 1 "
@@ -156,25 +158,28 @@ public class CustomerDAO {
             params.add(membershipLevel);
         }
 
-        // Apply keyword filter
+        // Apply keyword filter with flexible word matching using OR within each field
         if (keyword != null && !keyword.trim().isEmpty()) {
             if (keyword.length() > 100) {
                 throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
             }
             String normalizedKeyword = normalizeVietnamese(keyword);
-            String[] keywords = normalizedKeyword.trim().split("\\s+");
+            String[] keywords = normalizedKeyword.split("\\s+");
             sql.append(" AND (");
-            for (int i = 0; i < keywords.length; i++) {
-                if (i > 0) sql.append(" OR ");
-                sql.append("(LOWER(c.FullName) LIKE ? OR LOWER(u.Email) LIKE ? OR LOWER(c.Phone) LIKE ?)");
-                params.add("%" + keywords[i] + "%");
-                params.add("%" + keywords[i] + "%");
-                params.add("%" + keywords[i] + "%");
+            boolean firstKeyword = true;
+            for (String kw : keywords) {
+                if (!firstKeyword) sql.append(" OR ");
+                sql.append("(LOWER(c.FullNameNormalized) LIKE ? OR LOWER(c.Gmail) LIKE ? OR LOWER(c.Phone) LIKE ?)");
+                String keywordPart = "%" + kw + "%";
+                params.add(keywordPart);
+                params.add(keywordPart);
+                params.add(keywordPart);
+                firstKeyword = false;
             }
             sql.append(")");
         }
 
-        sql.append(" GROUP BY c.CustomerID, c.FullName, c.Phone, u.Email, c.Gender, c.BirthDate, c.CreatedAt, c.Address, lc.TierLevel ");
+        sql.append(" GROUP BY c.CustomerID, c.FullName, c.FullNameNormalized, c.Phone, c.Gmail, c.Gender, c.BirthDate, c.CreatedAt, c.Address, c.IsActive, c.UserID, c.img, lc.TierLevel ");
         sql.append(" ORDER BY c.CustomerID OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
         params.add(offset);
         params.add(pageSize);
@@ -192,16 +197,19 @@ public class CustomerDAO {
                     customer.setCustomerID(rs.getInt("CustomerID"));
                     customer.setFullName(rs.getString("FullName"));
                     customer.setPhone(rs.getString("Phone"));
-                    customer.setEmail(rs.getString("Email"));
+                    customer.setGmail(rs.getString("Gmail"));
                     customer.setGender(rs.getString("Gender"));
                     customer.setBirthDate(rs.getDate("BirthDate"));
                     customer.setCreatedAt(rs.getTimestamp("CreatedAt"));
                     customer.setAddress(rs.getString("Address"));
+                    customer.setActive(rs.getBoolean("IsActive"));
+                    customer.setUserId(rs.getInt("UserID"));
+                    customer.setImg(rs.getString("img"));
                     customer.setTotalSpent(rs.getDouble("TotalSpent"));
                     customer.setMembershipLevel(rs.getString("MembershipLevel"));
                     customers.add(customer);
-                    LOGGER.log(Level.INFO, "Found customer: ID={0}, FullName={1}", 
-                               new Object[]{customer.getCustomerID(), customer.getFullName()});
+                    LOGGER.log(Level.INFO, "Found customer: ID={0}, FullName={1}, Normalized FullName={2}", 
+                               new Object[]{customer.getCustomerID(), customer.getFullName(), rs.getString("FullNameNormalized")});
                 }
             }
         }
@@ -217,7 +225,6 @@ public class CustomerDAO {
         StringBuilder sql = new StringBuilder(
                 "SELECT COUNT(DISTINCT c.CustomerID) AS Total "
                 + "FROM Customers c "
-                + "INNER JOIN Users u ON c.UserID = u.UserID "
                 + "LEFT JOIN LoyaltyCustomers lc ON c.CustomerID = lc.CustomerID "
                 + "WHERE c.IsActive = 1 "
         );
@@ -241,20 +248,23 @@ public class CustomerDAO {
             params.add(membershipLevel);
         }
 
-        // Apply keyword filter
+        // Apply keyword filter with flexible word matching using OR within each field
         if (keyword != null && !keyword.trim().isEmpty()) {
             if (keyword.length() > 100) {
                 throw new IllegalArgumentException("Search keyword exceeds 100 characters.");
             }
             String normalizedKeyword = normalizeVietnamese(keyword);
-            String[] keywords = normalizedKeyword.trim().split("\\s+");
+            String[] keywords = normalizedKeyword.split("\\s+");
             sql.append(" AND (");
-            for (int i = 0; i < keywords.length; i++) {
-                if (i > 0) sql.append(" OR ");
-                sql.append("(LOWER(c.FullName) LIKE ? OR LOWER(u.Email) LIKE ? OR LOWER(c.Phone) LIKE ?)");
-                params.add("%" + keywords[i] + "%");
-                params.add("%" + keywords[i] + "%");
-                params.add("%" + keywords[i] + "%");
+            boolean firstKeyword = true;
+            for (String kw : keywords) {
+                if (!firstKeyword) sql.append(" OR ");
+                sql.append("(LOWER(c.FullNameNormalized) LIKE ? OR LOWER(c.Gmail) LIKE ? OR LOWER(c.Phone) LIKE ?)");
+                String keywordPart = "%" + kw + "%";
+                params.add(keywordPart);
+                params.add(keywordPart);
+                params.add(keywordPart);
+                firstKeyword = false;
             }
             sql.append(")");
         }
@@ -275,15 +285,17 @@ public class CustomerDAO {
         return 0;
     }
 
+    // Insert new customer
     public void insertCustomer(Customer customer) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
+        // Insert into Users table
         String sqlUsers = "INSERT INTO Users (Email, PasswordHash, RoleID, IsActive) VALUES (?, ?, ?, 1)";
         int userID;
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlUsers, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            stmt.setString(1, customer.getEmail());
-            String hashedPassword = BCrypt.hashpw(customer.getPassword(), BCrypt.gensalt());
+            stmt.setString(1, customer.getGmail());
+            String hashedPassword = BCrypt.hashpw("defaultPassword123", BCrypt.gensalt()); // Default password
             stmt.setString(2, hashedPassword);
             stmt.setInt(3, 2); // Assuming RoleID 2 is for customers
             stmt.executeUpdate();
@@ -296,8 +308,9 @@ public class CustomerDAO {
             }
         }
 
-        String sqlCustomers = "INSERT INTO Customers (FullName, Phone, Gender, BirthDate, CreatedAt, Address, UserID, IsActive) "
-                + "VALUES (?, ?, ?, ?, ?, ?, ?, 1)";
+        // Insert into Customers table
+        String sqlCustomers = "INSERT INTO Customers (FullName, Phone, Gender, BirthDate, CreatedAt, Address, UserID, IsActive, Gmail, img) "
+                + "VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, ?)";
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlCustomers)) {
             stmt.setString(1, customer.getFullName());
             stmt.setString(2, customer.getPhone());
@@ -306,33 +319,41 @@ public class CustomerDAO {
             stmt.setTimestamp(5, customer.getCreatedAt());
             stmt.setString(6, customer.getAddress());
             stmt.setInt(7, userID);
+            stmt.setString(8, customer.getGmail());
+            stmt.setString(9, customer.getImg());
             stmt.executeUpdate();
         }
     }
 
+    // Update existing customer
     public void updateCustomer(Customer customer) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");
         }
-        String sqlCustomers = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, BirthDate = ?, Address = ? WHERE CustomerID = ? AND IsActive = 1";
+        // Update Customers table
+        String sqlCustomers = "UPDATE Customers SET FullName = ?, Phone = ?, Gender = ?, BirthDate = ?, Address = ?, Gmail = ?, img = ? WHERE CustomerID = ? AND IsActive = 1";
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlCustomers)) {
             stmt.setString(1, customer.getFullName());
             stmt.setString(2, customer.getPhone());
             stmt.setString(3, customer.getGender());
             stmt.setDate(4, customer.getBirthDate());
             stmt.setString(5, customer.getAddress());
-            stmt.setInt(6, customer.getCustomerID());
+            stmt.setString(6, customer.getGmail());
+            stmt.setString(7, customer.getImg());
+            stmt.setInt(8, customer.getCustomerID());
             stmt.executeUpdate();
         }
 
+        // Update Users table
         String sqlUsers = "UPDATE Users SET Email = ? WHERE UserID = (SELECT UserID FROM Customers WHERE CustomerID = ? AND IsActive = 1)";
         try (PreparedStatement stmt = dbContext.getConnection().prepareStatement(sqlUsers)) {
-            stmt.setString(1, customer.getEmail());
+            stmt.setString(1, customer.getGmail());
             stmt.setInt(2, customer.getCustomerID());
             stmt.executeUpdate();
         }
     }
 
+    // Delete customer (soft delete)
     public void deleteCustomer(int customerID) throws SQLException {
         if (dbContext.getConnection() == null) {
             throw new SQLException("Database connection is not established.");

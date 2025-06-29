@@ -3,18 +3,26 @@
     <editor-bookmarks xmlns="http://www.netbeans.org/ns/editor-bookmarks/2" lastBookmarkId="0"/>
     <open-files xmlns="http://www.netbeans.org/ns/projectui-open-files/2">
         <group>
-            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/DAO/StoreDAO.java</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/customers.jsp</file>
-            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/pagination.jsp</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Color.java</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/ProductServlet.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Invoice.java</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/customer-details.jsp</file>
-            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/StoreServlet.java</file>
-            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Customer.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/notifications.jsp</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/SearchCustomerServlet.java</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/DAO/CustomerDAO.java</file>
-            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/warehouses.jsp</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/CustomerDetailsServlet.java</file>
             <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/UpdateProductServlet.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/DAO/StoreDAO.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/add-customer.jsp</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/pagination.jsp</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/products.jsp</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Notification.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/controller/StoreServlet.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Customer.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/LoyaltyCustomer.java</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/web/warehouses.jsp</file>
+            <file>file:/C:/Users/letha/OneDrive/Documents/GITHUB/SWP391-Group4/Chain_Store_Management/src/java/model/Category.java</file>
         </group>
     </open-files>
 </project-private>

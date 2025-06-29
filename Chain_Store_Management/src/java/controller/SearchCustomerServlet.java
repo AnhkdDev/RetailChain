@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -15,6 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 import model.Customer;
 
 @WebServlet(name = "SearchCustomerServlet", urlPatterns = {"/SearchCustomerServlet"})
@@ -28,31 +30,24 @@ public class SearchCustomerServlet extends HttpServlet {
             LOGGER.log(Level.INFO, "Search keyword is null or empty");
             return null;
         }
-        String normalizedKeyword = normalizeVietnamese(keyword);
-        String[] words = normalizedKeyword.trim().split("\\s+");
-        List<String> cleanedWords = new ArrayList<>();
-        for (String word : words) {
-            if (isValidWord(word)) {
-                cleanedWords.add(word);
-            } else {
-                LOGGER.log(Level.WARNING, "Invalid word filtered out: {0}", word);
-            }
+        String normalizedKeyword = normalizeVietnamese(keyword).trim();
+        if (normalizedKeyword.length() > 100) {
+            LOGGER.log(Level.WARNING, "Search keyword exceeds 100 characters, truncating");
+            normalizedKeyword = normalizedKeyword.substring(0, 100);
         }
-        if (cleanedWords.isEmpty()) {
+        String[] words = normalizedKeyword.split("\\s+");
+        if (words.length == 0) {
             LOGGER.log(Level.WARNING, "No valid words in search keyword: {0}", keyword);
             return null;
         }
-        String result = String.join(" ", cleanedWords);
-        LOGGER.log(Level.INFO, "Original keyword: {0}, Cleaned: {1}", new Object[]{keyword, result});
-        return result;
-    }
-
-    private boolean isValidWord(String word) {
-        if (word == null) {
-            return false;
+        String firstWord = words[0];
+        if (firstWord.matches("[a-zA-Z0-9@._-]+")) {
+            LOGGER.log(Level.INFO, "Original keyword: {0}, Cleaned: {1}", new Object[]{keyword, firstWord});
+            return firstWord;
+        } else {
+            LOGGER.log(Level.WARNING, "Invalid first word filtered out: {0}", firstWord);
+            return null;
         }
-        // Cho phép chữ in hoa, số, và các ký tự phổ biến
-        return word.matches("[a-zA-Z0-9@._-]+");
     }
 
     private String normalizeVietnamese(String text) {
@@ -80,9 +75,8 @@ public class SearchCustomerServlet extends HttpServlet {
             LOGGER.log(Level.INFO, "Processing request with action: {0}, search: {1}, cleanedSearch: {2}, gender: {3}, membershipLevel: {4}, reset: {5}", 
                        new Object[]{action, search, cleanedSearch, gender, membershipLevel, reset});
 
-            // Thông báo nếu từ khóa không hợp lệ
             if (search != null && !search.trim().isEmpty() && cleanedSearch == null) {
-                request.setAttribute("message", "Từ khóa tìm kiếm không hợp lệ.");
+                request.setAttribute("message", "Từ khóa tìm kiếm không hợp lệ. Chỉ cho phép chữ cái, số, @, . , - và _ cho từ đầu tiên.");
                 request.setAttribute("messageType", "warning");
             }
 
@@ -93,58 +87,6 @@ public class SearchCustomerServlet extends HttpServlet {
                 membershipLevel = null;
             }
 
-            // Handle add customer
-            if ("addCustomer".equals(action)) {
-                int currentPage = getCurrentPage(request);
-                int offset = (currentPage - 1) * RECORDS_PER_PAGE;
-                LOGGER.log(Level.INFO, "Action: addCustomer, Current page: {0}, Offset: {1}", new Object[]{currentPage, offset});
-
-                List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
-                int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
-                int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-
-                setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
-                request.getRequestDispatcher("customers.jsp").forward(request, response);
-                return;
-            }
-
-            // Handle view details
-            if ("viewDetails".equals(action)) {
-                String customerIdParam = request.getParameter("customerID");
-                if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
-                    try {
-                        int customerID = Integer.parseInt(customerIdParam);
-                        Customer customer = customerDAO.getCustomerById(customerID);
-                        if (customer != null) {
-                            request.setAttribute("customerDetails", customer);
-                            int currentPage = getCurrentPage(request);
-                            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
-                            LOGGER.log(Level.INFO, "Action: viewDetails, CustomerID: {0}, Current page: {1}, Offset: {2}", 
-                                       new Object[]{customerID, currentPage, offset});
-
-                            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
-                            int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
-                            int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-
-                            setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
-                            request.getRequestDispatcher("customers.jsp").forward(request, response);
-                            return;
-                        } else {
-                            request.setAttribute("message", "Customer not found.");
-                            request.setAttribute("messageType", "danger");
-                        }
-                    } catch (NumberFormatException e) {
-                        LOGGER.log(Level.WARNING, "Invalid customer ID: {0}", customerIdParam);
-                        request.setAttribute("message", "Invalid customer ID.");
-                        request.setAttribute("messageType", "danger");
-                    }
-                } else {
-                    request.setAttribute("message", "Customer ID is required.");
-                    request.setAttribute("messageType", "danger");
-                }
-            }
-
-            // Handle edit customer
             if ("editCustomer".equals(action)) {
                 String customerIdParam = request.getParameter("customerID");
                 if (customerIdParam != null && !customerIdParam.trim().isEmpty()) {
@@ -153,16 +95,7 @@ public class SearchCustomerServlet extends HttpServlet {
                         Customer customer = customerDAO.getCustomerById(customerID);
                         if (customer != null) {
                             request.setAttribute("editCustomer", customer);
-                            int currentPage = getCurrentPage(request);
-                            int offset = (currentPage - 1) * RECORDS_PER_PAGE;
-                            LOGGER.log(Level.INFO, "Action: editCustomer, CustomerID: {0}, Current page: {1}, Offset: {2}", 
-                                       new Object[]{customerID, currentPage, offset});
-
-                            List<Customer> customers = customerDAO.searchCustomers(cleanedSearch, gender, membershipLevel, offset, RECORDS_PER_PAGE);
-                            int totalRecords = customerDAO.getTotalCustomerCount(cleanedSearch, gender, membershipLevel);
-                            int totalPages = (int) Math.ceil((double) totalRecords / RECORDS_PER_PAGE);
-
-                            setRequestAttributes(request, customers, currentPage, totalPages, search, gender, membershipLevel);
+                            request.setAttribute("showEditModal", true); // Flag để mở modal Edit
                             request.getRequestDispatcher("customers.jsp").forward(request, response);
                             return;
                         } else {
@@ -180,7 +113,6 @@ public class SearchCustomerServlet extends HttpServlet {
                 }
             }
 
-            // Default: Load customer list
             int currentPage = getCurrentPage(request);
             int offset = (currentPage - 1) * RECORDS_PER_PAGE;
             LOGGER.log(Level.INFO, "Default action, Current page: {0}, Offset: {1}", new Object[]{currentPage, offset});
@@ -292,10 +224,11 @@ public class SearchCustomerServlet extends HttpServlet {
                 String customerId = request.getParameter("customerID");
                 String fullName = request.getParameter("fullName");
                 String phone = request.getParameter("phone");
-                String email = request.getParameter("email");
+                String gmail = request.getParameter("gmail");
                 String gender = request.getParameter("gender");
                 String birthDate = request.getParameter("birthDate");
                 String address = request.getParameter("address");
+                String img = request.getParameter("img");
 
                 if (fullName == null || fullName.trim().isEmpty() || fullName.length() > 100) {
                     throw new IllegalArgumentException("Full name is required and must be 1-100 characters.");
@@ -303,8 +236,8 @@ public class SearchCustomerServlet extends HttpServlet {
                 if (phone == null || !phone.matches("\\d{10}")) {
                     throw new IllegalArgumentException("Phone must be a 10-digit number.");
                 }
-                if (email == null || !email.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-                    throw new IllegalArgumentException("Invalid email format.");
+                if (gmail == null || !gmail.matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
+                    throw new IllegalArgumentException("Invalid Gmail format.");
                 }
                 if (gender == null || !List.of("Male", "Female", "Other").contains(gender)) {
                     throw new IllegalArgumentException("Invalid gender.");
@@ -318,12 +251,12 @@ public class SearchCustomerServlet extends HttpServlet {
 
                 customer.setFullName(fullName);
                 customer.setPhone(phone);
-                customer.setEmail(email.toLowerCase());
+                customer.setGmail(gmail.toLowerCase());
                 customer.setGender(gender);
                 customer.setBirthDate(Date.valueOf(birthDate));
                 customer.setAddress(address);
                 customer.setCreatedAt(new Timestamp(System.currentTimeMillis()));
-                customer.setTotalSpent(0.0);
+                customer.setImg(img);
 
                 if (customerId != null && !customerId.trim().isEmpty()) {
                     customer.setCustomerID(Integer.parseInt(customerId));
@@ -331,11 +264,6 @@ public class SearchCustomerServlet extends HttpServlet {
                     request.setAttribute("message", "Customer updated successfully.");
                     request.setAttribute("messageType", "success");
                 } else {
-                    String password = request.getParameter("password");
-                    if (password == null || password.trim().isEmpty() || password.length() < 6) {
-                        throw new IllegalArgumentException("Password is required and must be at least 6 characters.");
-                    }
-                    customer.setPassword(password);
                     customerDAO.insertCustomer(customer);
                     request.setAttribute("message", "Customer added successfully.");
                     request.setAttribute("messageType", "success");

@@ -1,7 +1,6 @@
 package controller;
 
 import DAO.CustomerDAO;
-import java.sql.*;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -13,10 +12,6 @@ import java.util.List;
 import model.Customer;
 import model.Invoice;
 
-/**
- * Servlet to handle viewing customer details and their invoices, and preparing edit page.
- * @author Admin
- */
 @WebServlet(name = "CustomerDetailsServlet", urlPatterns = {"/CustomerDetailsServlet"})
 public class CustomerDetailsServlet extends HttpServlet {
 
@@ -53,17 +48,11 @@ public class CustomerDetailsServlet extends HttpServlet {
                 return;
             }
 
-            String action = request.getParameter("action");
-            System.out.println("CustomerDetailsServlet: Action = " + action); // Log
-            if ("edit".equals(action)) {
-                request.setAttribute("customer", customer);
-                request.getRequestDispatcher("edit-customer.jsp").forward(request, response);
-            } else {
-                List<Invoice> invoices = customerDAO.getCustomerInvoices(customerID);
-                request.setAttribute("customer", customer);
-                request.setAttribute("invoices", invoices);
-                request.getRequestDispatcher("customer-details.jsp").forward(request, response);
-            }
+            List<Invoice> invoices = customerDAO.getCustomerInvoices(customerID);
+            request.setAttribute("customer", customer);
+            request.setAttribute("invoices", invoices);
+            request.setAttribute("showCustomerDetailsModal", true); // Thêm flag để mở modal
+            request.getRequestDispatcher("customers.jsp").forward(request, response);
         } catch (SQLException e) {
             e.printStackTrace();
             System.out.println("CustomerDetailsServlet: SQL Error: " + e.getMessage()); // Log
