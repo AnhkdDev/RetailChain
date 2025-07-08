@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
-    
     <servlet>
         <servlet-name>CustomerListServlet</servlet-name>
         <servlet-class>controller.CustomerListServlet</servlet-class>
@@ -23,11 +22,11 @@
     </servlet>
     <servlet>
         <servlet-name>RemoveCustomerServlet</servlet-name>
-        <servlet-class>controllerCustomer.RemoveCustomerServlet</servlet-class>
+        <servlet-class>controller.RemoveCustomerServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>StoreListServlet</servlet-name>
-        <servlet-class>controller.StoreListServlet</servlet-class>
+        <servlet-class>controller.StoreServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>NotificationServlet</servlet-name>
@@ -37,13 +36,25 @@
         <servlet-name>ProductServlet</servlet-name>
         <servlet-class>controller.ProductServlet</servlet-class>
     </servlet>
-    <servlet-mapping>
-        <servlet-name>CustomerListServlet</servlet-name>
-        <url-pattern>/CustomerListServlet</url-pattern>
-    </servlet-mapping>
+    <servlet>
+        <servlet-name>AddProductServlet</servlet-name>
+        <servlet-class>controller.AddProductServlet</servlet-class>
+    </servlet>
     <servlet>
         <servlet-name>CustomerDetailsServlet</servlet-name>
         <servlet-class>controller.CustomerDetailsServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>EditProductServlet</servlet-name>
+        <servlet-class>controller.EditProductServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>UpdateProductServlet</servlet-name>
+        <servlet-class>controller.UpdateProductServlet</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>AddEditProductServlet</servlet-name>
+        <servlet-class>controller.AddEditProductServlet</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>CustomerDetailsServlet</servlet-name>
@@ -72,5 +83,21 @@
     <servlet-mapping>
         <servlet-name>ProductServlet</servlet-name>
         <url-pattern>/products</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AddProductServlet</servlet-name>
+        <url-pattern>/add-product</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>EditProductServlet</servlet-name>
+        <url-pattern>/edit-product</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>UpdateProductServlet</servlet-name>
+        <url-pattern>/update-product</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AddEditProductServlet</servlet-name>
+        <url-pattern>/add-edit-product</url-pattern>
     </servlet-mapping>
 </web-app>

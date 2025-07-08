@@ -23,6 +23,29 @@ public class Customer {
     private double totalSpent; 
     private String membershipLevel;
 
+    // Default constructor
+    public Customer() {
+    }
+
+    // Parameterized constructor
+    public Customer(int customerID, String fullName, String phone, String address, String gender, Date birthDate, 
+                    Timestamp createdAt, boolean isActive, int userId, String img, String gmail, 
+                    double totalSpent, String membershipLevel) {
+        this.customerID = customerID;
+        this.fullName = fullName;
+        this.phone = phone;
+        this.address = address;
+        this.gender = gender;
+        this.birthDate = birthDate;
+        this.createdAt = createdAt;
+        this.isActive = isActive;
+        this.userId = userId;
+        this.img = img;
+        this.gmail = gmail;
+        this.totalSpent = totalSpent;
+        this.membershipLevel = membershipLevel;
+    }
+
     // Getters and Setters
     public int getCustomerID() {
         return customerID;

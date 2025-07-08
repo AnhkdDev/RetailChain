@@ -16,6 +16,10 @@ import java.util.logging.Logger;
 import model.Category;
 import model.Color;
 import model.Size;
+import java.net.URLEncoder;
+import java.net.URLDecoder;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 
 @WebServlet(name = "ProductServlet", urlPatterns = {"/products"})
 public class ProductServlet extends HttpServlet {
@@ -23,12 +27,62 @@ public class ProductServlet extends HttpServlet {
     private static final Logger LOGGER = Logger.getLogger(ProductServlet.class.getName());
     private static final int PAGE_SIZE = 5;
     private static final int MAX_SEARCH_LENGTH = 100;
+    private static final int MAX_REPEATED_CHAR = 4; // Ngưỡng ký tự lặp lại liên tiếp
+    private static final Pattern VALID_CHAR_PATTERN = Pattern.compile("^[\\p{L}\\p{N}\\s]*$"); // Chỉ chữ cái, số, khoảng trắng
+    private static final Pattern REPEATED_CHAR_PATTERN = Pattern.compile("(.)\\1{" + MAX_REPEATED_CHAR + ",}"); // Ký tự lặp lại từ 5 lần trở lên
 
-    private String cleanSearchKeyword(String keyword) {
-        if (keyword == null || keyword.trim().isEmpty()) return null;
-        keyword = keyword.trim();
-        if (keyword.length() > MAX_SEARCH_LENGTH) return null;
-        return keyword.replaceAll("[<>\"&'%]", "");
+    private List<String> cleanSearchKeyword(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            LOGGER.info("Search keyword is null or empty");
+            return null;
+        }
+        try {
+            // Giải mã URL để xử lý các ký tự như %E1%BA%AFn
+            keyword = URLDecoder.decode(keyword, "UTF-8");
+            // Loại bỏ khoảng trắng dư thừa
+            keyword = keyword.trim().replaceAll("\\s+", " ");
+            // Kiểm tra độ dài chuỗi
+            if (keyword.length() > MAX_SEARCH_LENGTH) {
+                LOGGER.info("Search keyword too long: " + keyword);
+                return null;
+            }
+            // Tách chuỗi thành các từ
+            String[] words = keyword.split(" ");
+            List<String> validWords = new ArrayList<>();
+            for (String word : words) {
+                // Kiểm tra độ dài từng từ
+                if (word.length() <= 1) {
+                    LOGGER.info("Search word too short: " + word);
+                    continue; // Bỏ qua từ có 1 ký tự
+                }
+                // Kiểm tra ký tự lặp lại liên tiếp
+                Matcher repeatedMatcher = REPEATED_CHAR_PATTERN.matcher(word);
+                if (repeatedMatcher.find()) {
+                    LOGGER.info("Search word contains repeated characters: " + word);
+                    continue; // Bỏ qua từ có ký tự lặp lại
+                }
+                // Kiểm tra ký tự hợp lệ
+                if (!VALID_CHAR_PATTERN.matcher(word).matches()) {
+                    LOGGER.info("Search word contains invalid characters: " + word);
+                    continue; // Bỏ qua từ có ký tự đặc biệt
+                }
+                // Loại bỏ các ký tự nguy hiểm (dự phòng)
+                word = word.replaceAll("[<>\"&'%]", "");
+                if (!word.isEmpty()) {
+                    validWords.add(word);
+                }
+            }
+            // Kiểm tra xem danh sách từ khóa có rỗng không
+            if (validWords.isEmpty()) {
+                LOGGER.info("No valid words after cleaning: " + keyword);
+                return null;
+            }
+            LOGGER.info("Cleaned search keywords: " + validWords);
+            return validWords;
+        } catch (Exception e) {
+            LOGGER.log(Level.WARNING, "Error decoding search keyword: " + keyword, e);
+            return null;
+        }
     }
 
     @Override
@@ -39,22 +93,25 @@ public class ProductServlet extends HttpServlet {
 
         ProductDAO productDAO = null;
         try {
-            productDAO = new ProductDAO();
+            productDAO = new ProductDAO(getServletContext());
 
-            // Xóa ảnh tạm nếu có tham số clearTemp
+            // Clear temporary images if clearTemp parameter is present
             String clearTemp = request.getParameter("clearTemp");
             if (clearTemp != null) {
-                int productId = Integer.parseInt(clearTemp);
-                request.getSession().removeAttribute("tempImageBytes_" + productId);
-                LOGGER.info("Cleared tempImageBytes for productId: " + productId);
+                String sessionKey = "tempImageBytes" + (clearTemp.isEmpty() ? "" : "_" + clearTemp);
+                request.getSession().removeAttribute(sessionKey);
+                LOGGER.info("Cleared tempImageBytes for key: " + sessionKey);
             }
 
-            // Xử lý tham số tìm kiếm
-            String search = cleanSearchKeyword(request.getParameter("search"));
+            // Process search parameters
+            List<String> searchKeywords = cleanSearchKeyword(request.getParameter("search"));
             String message = request.getParameter("message");
             String messageType = request.getParameter("messageType");
 
-            // Xử lý bộ lọc danh mục (nếu có)
+            // Log search keywords for debugging
+            LOGGER.info("Search keywords after cleaning: " + (searchKeywords != null ? searchKeywords : "null"));
+
+            // Process category filter
             Integer categoryID = null;
             String categoryIDParam = request.getParameter("categoryID");
             if (categoryIDParam != null && !categoryIDParam.isEmpty()) {
@@ -66,7 +123,7 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
-            // Xử lý bộ lọc trạng thái
+            // Process status filter
             Boolean isActive = null;
             String statusFilter = request.getParameter("statusFilter");
             if (statusFilter != null && !statusFilter.isEmpty()) {
@@ -77,7 +134,7 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
-            // Xử lý phân trang
+            // Process pagination
             int currentPage = 1;
             String pageParam = request.getParameter("page");
             if (pageParam != null && !pageParam.isEmpty()) {
@@ -89,28 +146,41 @@ public class ProductServlet extends HttpServlet {
                 }
             }
 
-            // Lấy danh sách sản phẩm và tổng số sản phẩm
-            List<Product> products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
-            int totalProducts = productDAO.getTotalProductCount(search, categoryID, isActive);
+            // Fetch all products and total count
+            List<Product> allProducts = productDAO.getProductsByPage(searchKeywords, categoryID, isActive);
+            int totalProducts = productDAO.getTotalProductCount(searchKeywords, categoryID, isActive);
             int totalPages = (int) Math.ceil((double) totalProducts / PAGE_SIZE);
 
-            // Điều chỉnh currentPage nếu vượt quá totalPages
-            if (currentPage > totalPages && totalPages > 0) {
-                currentPage = totalPages;
-                products = productDAO.getProductsByPage(search, categoryID, isActive, currentPage, PAGE_SIZE);
+            // Perform pagination in servlet
+            List<Product> products = new ArrayList<>();
+            if (allProducts != null) {
+                int start = (currentPage - 1) * PAGE_SIZE;
+                int end = Math.min(start + PAGE_SIZE, allProducts.size());
+                if (start < allProducts.size()) {
+                    products = allProducts.subList(start, end);
+                }
             }
 
-            // Lấy dữ liệu cho dropdown
+            if (currentPage > totalPages && totalPages > 0) {
+                currentPage = totalPages;
+                int start = (currentPage - 1) * PAGE_SIZE;
+                int end = Math.min(start + PAGE_SIZE, allProducts.size());
+                if (start < allProducts.size()) {
+                    products = allProducts.subList(start, end);
+                }
+            }
+
+            // Fetch dropdown data
             List<Size> sizeSuggestions = productDAO.getSizes();
             List<Color> colorSuggestions = productDAO.getColors();
             List<Category> categories = productDAO.getCategories();
 
-            // Đặt các thuộc tính cho JSP
+            // Set request attributes for JSP
             request.setAttribute("products", products != null ? products : new ArrayList<>());
             request.setAttribute("categories", categories);
             request.setAttribute("sizeSuggestions", sizeSuggestions);
             request.setAttribute("colorSuggestions", colorSuggestions);
-            request.setAttribute("search", search != null ? search : "");
+            request.setAttribute("search", searchKeywords != null ? String.join(" ", searchKeywords) : "");
             request.setAttribute("categoryID", categoryID != null ? categoryID : "");
             request.setAttribute("statusFilter", statusFilter != null ? statusFilter : "");
             request.setAttribute("currentPage", currentPage);
@@ -129,22 +199,22 @@ public class ProductServlet extends HttpServlet {
                 response.sendRedirect(request.getContextPath() + "/products");
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error: {0}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Database error: " + e.getMessage(), e);
             request.setAttribute("message", "Lỗi cơ sở dữ liệu: " + e.getMessage());
             request.setAttribute("messageType", "danger");
             if (!response.isCommitted()) {
                 request.getRequestDispatcher("/products.jsp").forward(request, response);
             } else {
-                response.sendRedirect(request.getContextPath() + "/products?message=Lỗi cơ sở dữ liệu&messageType=danger");
+                response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Lỗi cơ sở dữ liệu", "UTF-8") + "&messageType=danger");
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error: {0}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Unexpected error: " + e.getMessage(), e);
             request.setAttribute("message", "Lỗi không xác định: " + e.getMessage());
             request.setAttribute("messageType", "danger");
             if (!response.isCommitted()) {
                 request.getRequestDispatcher("/products.jsp").forward(request, response);
             } else {
-                response.sendRedirect(request.getContextPath() + "/products?message=Lỗi không xác định&messageType=danger");
+                response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Lỗi không xác định", "UTF-8") + "&messageType=danger");
             }
         } finally {
             if (productDAO != null) productDAO.closeConnection();
@@ -154,12 +224,11 @@ public class ProductServlet extends HttpServlet {
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         request.setCharacterEncoding("UTF-8");
 
         ProductDAO productDAO = null;
         try {
-            productDAO = new ProductDAO();
+            productDAO = new ProductDAO(getServletContext());
             String action = request.getParameter("action");
 
             if (action == null || action.isEmpty()) {
@@ -169,7 +238,7 @@ public class ProductServlet extends HttpServlet {
                 if (!response.isCommitted()) {
                     request.getRequestDispatcher("/products.jsp").forward(request, response);
                 } else {
-                    response.sendRedirect(request.getContextPath() + "/products?message=Thiếu tham số action&messageType=danger");
+                    response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Thiếu tham số action", "UTF-8") + "&messageType=danger");
                 }
                 return;
             }
@@ -185,7 +254,7 @@ public class ProductServlet extends HttpServlet {
                     if (!response.isCommitted()) {
                         request.getRequestDispatcher("/products.jsp").forward(request, response);
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/products?message=Thiếu tham số productId hoặc isActive&messageType=danger");
+                        response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Thiếu tham số productId hoặc isActive", "UTF-8") + "&messageType=danger");
                     }
                     return;
                 }
@@ -200,7 +269,7 @@ public class ProductServlet extends HttpServlet {
                         if (!response.isCommitted()) {
                             request.getRequestDispatcher("/products.jsp").forward(request, response);
                         } else {
-                            response.sendRedirect(request.getContextPath() + "/products?message=Mã sản phẩm không hợp lệ&messageType=danger");
+                            response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Mã sản phẩm không hợp lệ", "UTF-8") + "&messageType=danger");
                         }
                         return;
                     }
@@ -211,7 +280,7 @@ public class ProductServlet extends HttpServlet {
                     if (!response.isCommitted()) {
                         request.getRequestDispatcher("/products.jsp").forward(request, response);
                     } else {
-                        response.sendRedirect(request.getContextPath() + "/products?message=Mã sản phẩm phải là số&messageType=danger");
+                        response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Mã sản phẩm phải là số", "UTF-8") + "&messageType=danger");
                     }
                     return;
                 }
@@ -235,22 +304,22 @@ public class ProductServlet extends HttpServlet {
                 }
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Database error: {0}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Database error: " + e.getMessage(), e);
             request.setAttribute("message", "Lỗi cơ sở dữ liệu: " + e.getMessage());
             request.setAttribute("messageType", "danger");
             if (!response.isCommitted()) {
                 request.getRequestDispatcher("/products.jsp").forward(request, response);
             } else {
-                response.sendRedirect(request.getContextPath() + "/products?message=Lỗi cơ sở dữ liệu&messageType=danger");
+                response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Lỗi cơ sở dữ liệu", "UTF-8") + "&messageType=danger");
             }
         } catch (Exception e) {
-            LOGGER.log(Level.SEVERE, "Unexpected error: {0}", e.getMessage());
+            LOGGER.log(Level.SEVERE, "Unexpected error: " + e.getMessage(), e);
             request.setAttribute("message", "Lỗi không xác định: " + e.getMessage());
             request.setAttribute("messageType", "danger");
             if (!response.isCommitted()) {
                 request.getRequestDispatcher("/products.jsp").forward(request, response);
             } else {
-                response.sendRedirect(request.getContextPath() + "/products?message=Lỗi không xác định&messageType=danger");
+                response.sendRedirect(request.getContextPath() + "/products?message=" + URLEncoder.encode("Lỗi không xác định", "UTF-8") + "&messageType=danger");
             }
         } finally {
             if (productDAO != null) productDAO.closeConnection();

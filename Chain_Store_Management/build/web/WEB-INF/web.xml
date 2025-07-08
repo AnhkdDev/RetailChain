@@ -26,7 +26,7 @@
     </servlet>
     <servlet>
         <servlet-name>StoreListServlet</servlet-name>
-        <servlet-class>controller.StoreListServlet</servlet-class>
+        <servlet-class>controller.StoreServlet</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>NotificationServlet</servlet-name>
@@ -52,10 +52,10 @@
         <servlet-name>UpdateProductServlet</servlet-name>
         <servlet-class>controller.UpdateProductServlet</servlet-class>
     </servlet>
-    <servlet-mapping>
-        <servlet-name>CustomerListServlet</servlet-name>
-        <url-pattern>/CustomerListServlet</url-pattern>
-    </servlet-mapping>
+    <servlet>
+        <servlet-name>AddEditProductServlet</servlet-name>
+        <servlet-class>controller.AddEditProductServlet</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>CustomerDetailsServlet</servlet-name>
         <url-pattern>/CustomerDetailsServlet</url-pattern>
@@ -95,5 +95,9 @@
     <servlet-mapping>
         <servlet-name>UpdateProductServlet</servlet-name>
         <url-pattern>/update-product</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>AddEditProductServlet</servlet-name>
+        <url-pattern>/add-edit-product</url-pattern>
     </servlet-mapping>
 </web-app>
