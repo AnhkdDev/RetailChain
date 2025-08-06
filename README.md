@@ -41,8 +41,12 @@
 
 ---
 
-> 💡 Ghi chú: Công nghệ có thể được điều chỉnh tùy vào yêu cầu thực tế.
+## 🛠️ Công nghệ sử dụng 
 
+- Backend: `Java / JSP / SERVLET`
+- Frontend: `Javascript / HTML / CSS`
+- Database: `SQLSERVER`
+  
 ---
 
 ## 📌 Mục tiêu phát triển
