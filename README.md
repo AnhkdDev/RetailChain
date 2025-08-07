@@ -56,11 +56,3 @@
 - Giao diện thân thiện, dễ sử dụng
 - Cung cấp dữ liệu báo cáo chi tiết và chính xác
 
----
-
-## 👨‍💻 Đóng góp
-
-Mọi đóng góp hoặc góp ý để cải thiện hệ thống xin vui lòng mở issue hoặc gửi pull request!
-
----
-
