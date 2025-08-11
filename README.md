@@ -51,8 +51,9 @@
 
 ## 📌 Mục tiêu phát triển
 
-- Dễ dàng mở rộng khi tăng thêm chi nhánh
-- Hệ thống hoạt động ổn định và bảo mật
 - Giao diện thân thiện, dễ sử dụng
 - Cung cấp dữ liệu báo cáo chi tiết và chính xác
+- Dễ dàng mở rộng khi tăng thêm chi nhánh
+- Hệ thống hoạt động ổn định và bảo mật
+
 
