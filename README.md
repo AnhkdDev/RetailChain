@@ -1,11 +1,8 @@
 # 📦 Phần Mềm Quản Lý Bán Hàng Cho Chuỗi Cửa Hàng
-
 ## 📝 Giới thiệu
 
 Đây là một hệ thống phần mềm quản lý bán hàng được xây dựng nhằm hỗ trợ các chuỗi cửa hàng trong việc quản lý hoạt động kinh doanh, vận hành và khách hàng một cách hiệu quả. Hệ thống cho phép nhiều chi nhánh sử dụng đồng thời, có phân quyền người dùng rõ ràng, đảm bảo tính bảo mật và quản lý tập trung.
-
 ---
-
 ## ⚙️ Chức năng chính
 
 1. **Phân quyền truy cập và sử dụng hệ thống**
